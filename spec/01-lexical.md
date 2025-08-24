@@ -15,12 +15,12 @@
 
 ## 1. Source text and encoding
 
-1. A *source file* is a text file encoded as **UTF-8**.
+1. A *source file* is a text file that is typically encoded as **UTF-8**.
 2. For backwards compatibility, source files may remain **ANSI** provided the compiler is instructed to use the correct code page, such as 1252 (Project → Options → Delphi Compiler → Compiling → Code generation → "Code page").
 3. Embarcadero [officially recommends](https://docwiki.embarcadero.com/RADStudio/en/Unicode_in_RAD_Studio) using UTF-8 and writing a **UTF-8 BOM** to each source file to ensure correct encoding recognition across environments.
 4. Characters outside the ASCII range may appear in comments, string literals, and identifiers as permitted below.
 5. A *line terminator* is one of: CRLF (\r\n), LF (\n), or CR (\r) with the Windows-based IDE and tooling preferring CRLF.
-
+6. Supported encodings include UTF8, ANSI (with codepage), UTF-16 BE, UTF-16 LE, UTF-32 BE, UTF-32 LE
 
 ## 2. Lexical phases
 
