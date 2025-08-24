@@ -2,15 +2,16 @@
 
 # Delphi Language Specification — 01 Lexical Structure
 
-Targets the latest Delphi compiler, Delphi 12 Athens
+*Status*: Draft v0.3.2 — 2025-08-24  
+*Target*: RAD Studio 12 Athens (Delphi)  
+*Scope*: This chapter defines the lexical elements of the Delphi language: source text, comments, compiler directives, identifiers, literals, operators, delimiters, and tokenization rules. Grammar and semantics are specified in later chapters.
 
-This chapter defines how source text is broken into tokens (identifiers, keywords, literals, operators, and punctuators). It is **normative** unless explicitly marked “informative”.
-
-## Prefix
-- This document uses ASCII. Source files may be Unicode.
+## Conventions
 - The term "must" indicates a normative requirement.
 - Examples are informative, not normative.
 - References to data/lexical.json indicate the canonical machine-readable mapping for tools.
+- data/lexical.json is the canonical machine-readable mapping for tools.
+
 
 ## 1. Source text and encoding
 
@@ -71,6 +72,34 @@ Tokens are classified as:
 - literals (§8)
 - operators and punctuators (§9)
 
+### 5.1 Longest-match rule
+
+When two tokens share a prefix, the lexer must prefer the longest match. Examples:
+- .. must be recognized over . when both are possible.
+- := must be recognized over :.
+
+### 5.2 Delimiters and operators
+
+- Delimiters: , ; : . ( ) [ ]
+- Operators: := + - * / div mod and or xor not shl shr = <> < > <= >= in is as @ ^ ..
+
+Note: / is real division; div is integer division; mod is remainder. @ yields an address; ^ is pointer dereference.
+
+### 5.3 Disambiguation: dot vs range
+
+Because .. is a range operator, an integer followed by .. is not a real literal. Example:
+
+```
+1..5   // range; tokens: INT(1) DOTDOT INT(5)
+1.5    // tokens: REAL_LITERAL(1.5)
+1.     // tokens: REAL_LITERAL(1.0)
+1.e3   // tokens: REAL_LITERAL(1.0e3)
+```
+### 5.4 Disambiguation: Relational and generic type parameter delimiters
+- `<` and `>` serve both as relational operators and as generic type parameter delimiters; resolved by the grammar. See spec/03-grammar-ebnf.md (Generics).
+Because Delphi allows generic methods and class/static members on generic types, a few edge cases do require symbol awareness
+(the parser may need to know whether a leading `Foo` is a type or a variable/function to choose between `Foo<T>(...)` as a generic call vs `Foo < T` as a comparison).
+
 ## 6. Identifiers
 
 ### 6.1 Syntax
@@ -82,11 +111,17 @@ ContChar           : Letter | Digit | '_'
 
 EscapedIdentifier  : '&' Identifier
 ```
+- Identifiers are case‑insensitive for purposes of declaration matching and reference. Note: accented letters are treated as distinct identifiers.
 
-- Identifiers are case‑insensitive for purposes of declaration matching and reference, subject to implementation‑defined Unicode case folding. Note: accented letters are treated as distinct identifiers.
-- The ampersand `&` forces treatment as an identifier even if the spelling is a keyword. Example: `var &type: Integer;`
+### 6.2 Extended Identifiers
+- If `&` directly precedes an identifier, the scanner produces a single IDENTIFIER token whose lexeme is the identifier characters only; the & is consumed and not emitted as a separate token. 
 
-### 6.2 Examples
+- Extended Identifier Usage (Informative)
+  - Declaration sites: If the name equals a keyword, you must write & in the declaration (e.g., var &begin: Integer;). 
+  - Use sites: You need & only when the position would otherwise be parsed as a keyword. After a qualifier (like `Unit.TypeName` or `Obj.Member`), the grammar expects an identifier, so the & is typically optional (e.g., `TMyType.type` is OK). 
+  - Token table: & is listed among Delphi's "special symbols," but in normal Delphi code its only language role is this prefix for extended identifiers (it isn’t a bitwise operator).
+
+### 6.3 Identifier Examples
 
 ```
 Count  count  CoUnT    // same identifier
@@ -117,8 +152,6 @@ object pascal package platform private protected public published read readonly 
 reintroduce reference resources safecall sealed static stdcall strict stored unsafe varargs
 virtual write writeonly
 ```
-
-> Notes: The exact set of directive keywords evolves over time. Implementations may accept additional ones.
 
 ## 8. Literals
 
@@ -255,8 +288,42 @@ Supported conditional directives include (names shown without the leading $):
 - IFDEF, IFNDEF, ENDIF
 - IFOPT
 - DEFINE, UNDEF
+- LEGACYIFEND (switch)
 
-Boolean functions in $IF expressions include Defined(SYMBOL) and Declared(IDENT).
+Boolean functions in $IF expressions include:
+- Defined(SYMBOL)
+- Declared(IDENT)
+
+Expression grammar (informative sketch):
+- Expressions may use not, and, or, parentheses, and the comparison operators =, <>, <, >, <=, >= over integer constants and symbols. 
+
+### 10.3. $IF expression grammar (Normative, minimal)
+
+````
+if_expr      := or_expr ;
+
+or_expr      := and_expr { 'or' and_expr } ;
+and_expr     := not_expr { 'and' not_expr } ;
+not_expr     := [ 'not' ] rel_expr ;
+
+rel_expr     := add_expr [ rel_op add_expr ] ;
+rel_op       := '=' | '<>' | '<' | '>' | '<=' | '>=' ;
+
+add_expr     := mul_expr { add_op mul_expr } ;
+add_op       := '+' | '-' ;
+
+mul_expr     := unary { mul_op unary } ;
+mul_op       := '*' | 'div' | 'mod' ;
+
+unary        := [ '+' | '-' ] primary ;
+
+primary      := integer_literal
+              | 'True' | 'False'            # case-insensitive
+              | 'Defined' '(' identifier ')'
+              | 'Declared' '(' identifier ')'
+              | '(' if_expr ')' ;
+````
+
 
 #### 10.2.1 Nested example
 
@@ -274,27 +341,85 @@ Boolean functions in $IF expressions include Defined(SYMBOL) and Declared(IDENT)
 {$IFEND}
 ```
 
-### 10.3 Includes, resources, and other directives
+### 10.3 Non-conditional directives (catalog)
 
-Common non-conditional directives include (not exhaustive):
+This list mirrors data/lexical.json and is grouped for contributor convenience. Exact semantics are defined by the implementation.
 
-- Include/resource/link: INCLUDE or I, RESOURCE or R, LINK or L, RESOURCERESERVE.
-- Messages and diagnostics: MESSAGE, WARN, WARNINGS, HINTS, REGION or ENDREGION, TEXTBLOCK.
-- Code generation switches: ASSERTIONS, BOOLEVAL, CODEALIGN, EXTENDEDSYNTAX, EXCESSPRECISION, HIGHCHARUNICODE, IMPORTEDDATA, IOCHECKS, LOCALSYMBOLS, LONGSTRINGS, MINENUMSIZE, OPTIMIZATION, OVERFLOWCHECKS, POINTERMATH, RANGECHECKS, REALCOMPATIBILITY, STACKFRAMES, STRONGLINKTYPES, TYPEINFO, TYPEDADDRESS, VARSTRINGCHECKS, WRITEABLECONST, ZEROBASEDSTRINGS.
-- Linking/binary: ALIGN or A, APPTYPE, DEBUGINFO or D, DESCRIPTION, DYNAMICBASE, IMAGEBASE, IMPLICITBUILD, LARGEADDRESSAWARE, LIBPREFIX, LIBSUFFIX, LIBVERSION, NXCOMPAT, SetPE* family, TSAWARE, HIGHENTROPYVA.
-- RTTI and interop: RTTI, METHODINFO, HPPEMIT (including PUSH/POP/END), EXTERNALSYM, NODEFINE, OBJTYPENAME.
-- Packages/deployment: ALLOWBIND, ALLOWISOLATION, DENYPACKAGEUNIT, RUNONLY, WEAKPACKAGEUNIT.
+- Include / resources / link:
+  - INCLUDE or I
+  - RESOURCE or R
+  - RESOURCERESERVE
+  - LINK or L
 
-See data/lexical.json for a structured, exhaustive list.
+- Messages, warnings, regions:
+  - MESSAGE
+  - WARN
+  - WARNINGS
+  - HINTS
+  - REGION and ENDREGION
+  - TEXTBLOCK
+
+- Code generation switches:
+  - ASSERTIONS (C+ C-)
+  - BOOLEVAL (B+ B-)
+  - CODEALIGN
+  - EXTENDEDSYNTAX (X+ X-)
+  - EXCESSPRECISION
+  - HIGHCHARUNICODE
+  - IMPORTEDDATA (G+ G-)
+  - IOCHECKS (I+ I-)
+  - LOCALSYMBOLS (L+ L-)
+  - LONGSTRINGS (H+ H-)
+  - MINENUMSIZE (Z1 Z2 Z4)
+  - OPTIMIZATION (O+ O-)
+  - OVERFLOWCHECKS (Q+ Q-)
+  - POINTERMATH
+  - RANGECHECKS (R+ R-)
+  - REALCOMPATIBILITY
+  - STACKFRAMES (W+ W-)
+  - STRONGLINKTYPES
+  - TYPEINFO (M+ M-)
+  - TYPEDADDRESS (T+ T-)
+  - VARSTRINGCHECKS (V+ V-)
+  - WRITEABLECONST (J+ J-)
+  - ZEROBASEDSTRINGS
+
+- Linking / binary:
+  - ALIGN or A
+  - APPTYPE
+  - DEBUGINFO or D
+  - DESCRIPTION
+  - DYNAMICBASE
+  - IMAGEBASE
+  - IMPLICITBUILD
+  - LARGEADDRESSAWARE
+  - LIBPREFIX, LIBSUFFIX, LIBVERSION
+  - NXCOMPAT
+  - SetPEFlags, SetPEOptFlags, SETPEOSVERSION, SETPESUBSYSVERSION, SETPEUSERVERSION
+  - TSAWARE
+  - HIGHENTROPYVA
+
+- RTTI and interface info:
+  - RTTI
+  - METHODINFO
+
+- C++Builder interop:
+  - HPPEMIT (including PUSH, POP, END forms)
+  - EXTERNALSYM
+  - NODEFINE
+  - OBJTYPENAME
+
+- Packages / deployment:
+  - ALLOWBIND
+  - ALLOWISOLATION
+  - DENYPACKAGEUNIT
+  - RUNONLY
+  - WEAKPACKAGEUNIT
+
+See data/lexical.json for exact shapes used by tools.
 
 
-## 11. Ambiguities and disambiguation
-
-- `.` vs `..`: If two dots appear in sequence, they form the `..` token (range). A real literal like `1..2` must be written `1 .. 2` or `1.0..2`.
-- `<` and `>` serve both as relational operators and as generic type parameter delimiters; resolved by the grammar of §03.
-- `&Identifier` is a single identifier token; the `&` does not form a separate operator token.
-
-## 12. Examples (informative)
+## 11. Examples (informative)
 
 ```
 var S: string;
@@ -311,7 +436,7 @@ Produces:
   [Identifier] [(] [Identifier] [,] [HexInteger] [)] [;]
 ```
 
-## 13. Conformance
+## 12. Conformance
 
 A conforming implementation must:
 - Accept the token forms defined in §§6–9.
