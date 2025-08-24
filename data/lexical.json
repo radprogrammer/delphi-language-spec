@@ -1,16 +1,15 @@
 {
   "meta": {
     "name": "Delphi Lexical Specification",
-    "version": "0.3.0",
+    "version": "0.3.1",
     "date": "2025-08-24",
     "language": "Delphi (latest)",
     "case_insensitive_identifiers": true,
     "source_encoding": "Unicode",
     "notes": [
-      "ASCII-only regex hints are provided; engines differ in Unicode support.",
       "Identifiers are case-insensitive for comparison but original casing should be preserved.",
-      "Compiler directives are handled prior to final tokenization for conditional compilation.",
-      "This file describes lexical structure only; parsing and semantics are defined elsewhere."
+      "Compiler directives are processed before final tokenization for conditional compilation.",
+      "This file describes lexical structure only; grammar and semantics live under /spec."
     ]
   },
   "char_classes": {
@@ -67,23 +66,536 @@
         "close": "*)"
       }
     ],
-    "conditionals": [
-      "IF",
-      "IFDEF",
-      "IFNDEF",
-      "ELSEIF",
-      "ELSE",
-      "ENDIF",
-      "IFEND"
-    ],
-    "boolean_functions": [
-      "Defined",
-      "Declared"
-    ],
-    "processing_order": "Preprocess before lexing to remove inactive regions.",
-    "examples": [
-      " {$IFDEF WIN64} {$ENDIF} ",
-      " (*$IF Defined(MSWINDOWS) and not Defined(CONSOLE)*) (*$IFEND*) "
+    "processing_order": "Preprocess before lexing to remove or keep conditional regions.",
+    "groups": [
+      {
+        "name": "Conditional compilation",
+        "directives": [
+          {
+            "name": "IF",
+            "forms": [
+              "{$IF <expr>}",
+              "{$IFEND}",
+              "{$ELSE}",
+              "{$ELSEIF <expr>}"
+            ],
+            "scope": "Local"
+          },
+          {
+            "name": "IFDEF",
+            "forms": [
+              "{$IFDEF SYMBOL}",
+              "{$ENDIF}",
+              "{$ELSE}"
+            ],
+            "scope": "Local"
+          },
+          {
+            "name": "IFNDEF",
+            "forms": [
+              "{$IFNDEF SYMBOL}",
+              "{$ENDIF}",
+              "{$ELSE}"
+            ],
+            "scope": "Local"
+          },
+          {
+            "name": "IFOPT",
+            "forms": [
+              "{$IFOPT <switch>}",
+              "{$ENDIF}",
+              "{$ELSE}"
+            ],
+            "scope": "Local"
+          },
+          {
+            "name": "DEFINE",
+            "forms": [
+              "{$DEFINE SYMBOL}"
+            ],
+            "scope": "Local"
+          },
+          {
+            "name": "UNDEF",
+            "forms": [
+              "{$UNDEF SYMBOL}"
+            ],
+            "scope": "Local"
+          },
+          {
+            "name": "LEGACYIFEND",
+            "forms": [
+              "{$LEGACYIFEND ON|OFF}"
+            ],
+            "scope": "Local"
+          }
+        ]
+      },
+      {
+        "name": "Include and resources",
+        "directives": [
+          {
+            "name": "INCLUDE",
+            "forms": [
+              "{$INCLUDE file}",
+              "{$I file}"
+            ],
+            "scope": "Local"
+          },
+          {
+            "name": "RESOURCE",
+            "forms": [
+              "{$R file}",
+              "{$RESOURCE file}"
+            ],
+            "scope": "Local"
+          },
+          {
+            "name": "RESOURCERESERVE",
+            "forms": [
+              "{$RESOURCERESERVE size}"
+            ],
+            "scope": "Global"
+          },
+          {
+            "name": "LINK",
+            "forms": [
+              "{$LINK file}",
+              "{$L file}"
+            ],
+            "scope": "Local"
+          }
+        ]
+      },
+      {
+        "name": "Messages, warnings, regions",
+        "directives": [
+          {
+            "name": "MESSAGE",
+            "forms": [
+              "{$MESSAGE 'text'}"
+            ],
+            "scope": "Local"
+          },
+          {
+            "name": "WARN",
+            "forms": [
+              "{$WARN id ON|OFF|ERROR}"
+            ],
+            "scope": "Local"
+          },
+          {
+            "name": "WARNINGS",
+            "forms": [
+              "{$WARNINGS ON|OFF}"
+            ],
+            "scope": "Local"
+          },
+          {
+            "name": "HINTS",
+            "forms": [
+              "{$HINTS ON|OFF}"
+            ],
+            "scope": "Local"
+          },
+          {
+            "name": "REGION",
+            "forms": [
+              "{$REGION 'name'}",
+              "{$ENDREGION}"
+            ],
+            "scope": "Local"
+          },
+          {
+            "name": "TEXTBLOCK",
+            "forms": [
+              "{$TEXTBLOCK ... }"
+            ],
+            "scope": "Local"
+          }
+        ]
+      },
+      {
+        "name": "Code generation switches",
+        "directives": [
+          {
+            "name": "ASSERTIONS",
+            "forms": [
+              "{$ASSERTIONS ON|OFF}",
+              "{$C+|C-}"
+            ],
+            "scope": "Local"
+          },
+          {
+            "name": "BOOLEVAL",
+            "forms": [
+              "{$BOOLEVAL ON|OFF}",
+              "{$B+|B-}"
+            ],
+            "scope": "Local"
+          },
+          {
+            "name": "CODEALIGN",
+            "forms": [
+              "{$CODEALIGN n}"
+            ],
+            "scope": "Local"
+          },
+          {
+            "name": "EXTENDEDSYNTAX",
+            "forms": [
+              "{$EXTENDEDSYNTAX ON|OFF}",
+              "{$X+|X-}"
+            ],
+            "scope": "Global"
+          },
+          {
+            "name": "EXCESSPRECISION",
+            "forms": [
+              "{$EXCESSPRECISION ON|OFF}"
+            ],
+            "scope": "Local"
+          },
+          {
+            "name": "HIGHCHARUNICODE",
+            "forms": [
+              "{$HIGHCHARUNICODE ON|OFF}"
+            ],
+            "scope": "Local"
+          },
+          {
+            "name": "IMPORTEDDATA",
+            "forms": [
+              "{$IMPORTEDDATA ON|OFF}",
+              "{$G+|G-}"
+            ],
+            "scope": "Local"
+          },
+          {
+            "name": "IOCHECKS",
+            "forms": [
+              "{$IOCHECKS ON|OFF}",
+              "{$I+|I-}"
+            ],
+            "scope": "Local"
+          },
+          {
+            "name": "LOCALSYMBOLS",
+            "forms": [
+              "{$LOCALSYMBOLS ON|OFF}",
+              "{$L+|L-}"
+            ],
+            "scope": "Global"
+          },
+          {
+            "name": "LONGSTRINGS",
+            "forms": [
+              "{$LONGSTRINGS ON|OFF}",
+              "{$H+|H-}"
+            ],
+            "scope": "Local"
+          },
+          {
+            "name": "MINENUMSIZE",
+            "forms": [
+              "{$MINENUMSIZE 1|2|4}",
+              "{$Z1|$Z2|$Z4}"
+            ],
+            "scope": "Local"
+          },
+          {
+            "name": "OPTIMIZATION",
+            "forms": [
+              "{$OPTIMIZATION ON|OFF}",
+              "{$O+|O-}"
+            ],
+            "scope": "Local"
+          },
+          {
+            "name": "OVERFLOWCHECKS",
+            "forms": [
+              "{$OVERFLOWCHECKS ON|OFF}",
+              "{$Q+|Q-}"
+            ],
+            "scope": "Local"
+          },
+          {
+            "name": "POINTERMATH",
+            "forms": [
+              "{$POINTERMATH ON|OFF}"
+            ],
+            "scope": "Local"
+          },
+          {
+            "name": "RANGECHECKS",
+            "forms": [
+              "{$RANGECHECKS ON|OFF}",
+              "{$R+|R-}"
+            ],
+            "scope": "Local"
+          },
+          {
+            "name": "REALCOMPATIBILITY",
+            "forms": [
+              "{$REALCOMPATIBILITY ON|OFF}"
+            ],
+            "scope": "Local"
+          },
+          {
+            "name": "STACKFRAMES",
+            "forms": [
+              "{$STACKFRAMES ON|OFF}",
+              "{$W+|W-}"
+            ],
+            "scope": "Local"
+          },
+          {
+            "name": "STRONGLINKTYPES",
+            "forms": [
+              "{$STRONGLINKTYPES ON|OFF}"
+            ],
+            "scope": "Global"
+          },
+          {
+            "name": "TYPEINFO",
+            "forms": [
+              "{$TYPEINFO ON|OFF}",
+              "{$M+|M-}"
+            ],
+            "scope": "Local"
+          },
+          {
+            "name": "TYPEDADDRESS",
+            "forms": [
+              "{$TYPEDADDRESS ON|OFF}",
+              "{$T+|T-}"
+            ],
+            "scope": "Global"
+          },
+          {
+            "name": "VARSTRINGCHECKS",
+            "forms": [
+              "{$VARSTRINGCHECKS ON|OFF}",
+              "{$V+|V-}"
+            ],
+            "scope": "Local"
+          },
+          {
+            "name": "WRITEABLECONST",
+            "forms": [
+              "{$WRITEABLECONST ON|OFF}",
+              "{$J+|J-}"
+            ],
+            "scope": "Local"
+          },
+          {
+            "name": "ZEROBASEDSTRINGS",
+            "forms": [
+              "{$ZEROBASEDSTRINGS ON|OFF}"
+            ],
+            "scope": "Local"
+          }
+        ]
+      },
+      {
+        "name": "Linking / binary",
+        "directives": [
+          {
+            "name": "ALIGN fields",
+            "forms": [
+              "{$ALIGN n}",
+              "{$A n}"
+            ],
+            "scope": "Local"
+          },
+          {
+            "name": "APPTYPE",
+            "forms": [
+              "{$APPTYPE CONSOLE|GUI|DLL|...}"
+            ],
+            "scope": "Global"
+          },
+          {
+            "name": "DEBUGINFO",
+            "forms": [
+              "{$DEBUGINFO ON|OFF}",
+              "{$D+|D-}"
+            ],
+            "scope": "Global"
+          },
+          {
+            "name": "DESCRIPTION",
+            "forms": [
+              "{$DESCRIPTION 'text'}",
+              "{$D 'text'}"
+            ],
+            "scope": "Global"
+          },
+          {
+            "name": "DYNAMICBASE",
+            "forms": [
+              "{$DYNAMICBASE ON|OFF}"
+            ],
+            "scope": "Local"
+          },
+          {
+            "name": "IMAGEBASE",
+            "forms": [
+              "{$IMAGEBASE addr}"
+            ],
+            "scope": "Global"
+          },
+          {
+            "name": "IMPLICITBUILD",
+            "forms": [
+              "{$IMPLICITBUILD ON|OFF}"
+            ],
+            "scope": "Global"
+          },
+          {
+            "name": "LARGEADDRESSAWARE",
+            "forms": [
+              "{$LARGEADDRESSAWARE ON|OFF}"
+            ],
+            "scope": "Global"
+          },
+          {
+            "name": "LIBPREFIX/SUFFIX/VERSION",
+            "forms": [
+              "{$LIBPREFIX 'pfx'}",
+              "{$LIBSUFFIX 'sfx'}",
+              "{$LIBVERSION 'ver'}"
+            ],
+            "scope": "Global"
+          },
+          {
+            "name": "NXCOMPAT",
+            "forms": [
+              "{$NXCOMPAT ON|OFF}"
+            ],
+            "scope": "Global"
+          },
+          {
+            "name": "PE header flags",
+            "forms": [
+              "{$SetPEFlags n}",
+              "{$SetPEOptFlags n}",
+              "{$SETPEOSVERSION a.b}",
+              "{$SETPESUBSYSVERSION a.b}",
+              "{$SETPEUSERVERSION a.b}"
+            ],
+            "scope": "Local"
+          },
+          {
+            "name": "TSAWARE",
+            "forms": [
+              "{$TSAWARE ON|OFF}"
+            ],
+            "scope": "Global"
+          },
+          {
+            "name": "HIGHENTROPYVA",
+            "forms": [
+              "{$HIGHENTROPYVA ON|OFF}"
+            ],
+            "scope": "Global"
+          }
+        ]
+      },
+      {
+        "name": "RTTI and interface",
+        "directives": [
+          {
+            "name": "RTTI",
+            "forms": [
+              "{$RTTI INHERIT|EXPLICIT}"
+            ],
+            "scope": "Local"
+          },
+          {
+            "name": "METHODINFO",
+            "forms": [
+              "{$METHODINFO ON|OFF}"
+            ],
+            "scope": "Local"
+          }
+        ]
+      },
+      {
+        "name": "C++Builder interop",
+        "directives": [
+          {
+            "name": "HPPEMIT",
+            "forms": [
+              "{$HPPEMIT <C++ text>}",
+              "{$HPPEMIT END}",
+              "{$HPPEMIT PUSH|POP}"
+            ],
+            "scope": "Local"
+          },
+          {
+            "name": "EXTERNALSYM",
+            "forms": [
+              "{$EXTERNALSYM 'typeNameInHpp' ['typeNameInHppUnion'] }"
+            ],
+            "scope": "Local"
+          },
+          {
+            "name": "NODEFINE",
+            "forms": [
+              "{$NODEFINE 'typeNameInHpp' ['typeNameInHppUnion'] }"
+            ],
+            "scope": "Local"
+          },
+          {
+            "name": "OBJTYPENAME",
+            "forms": [
+              "{$OBJTYPENAME typeIdent ['{B|N}typeNameInObj']}"
+            ],
+            "scope": "Global"
+          }
+        ]
+      },
+      {
+        "name": "Packages / deployment",
+        "directives": [
+          {
+            "name": "ALLOWBIND",
+            "forms": [
+              "{$ALLOWBIND ON|OFF}"
+            ],
+            "scope": "Global"
+          },
+          {
+            "name": "ALLOWISOLATION",
+            "forms": [
+              "{$ALLOWISOLATION ON|OFF}"
+            ],
+            "scope": "Global"
+          },
+          {
+            "name": "DENYPACKAGEUNIT",
+            "forms": [
+              "{$DENYPACKAGEUNIT 'UnitName'}"
+            ],
+            "scope": "Local"
+          },
+          {
+            "name": "RUNONLY",
+            "forms": [
+              "{$RUNONLY ON|OFF}"
+            ],
+            "scope": "Local"
+          },
+          {
+            "name": "WEAKPACKAGEUNIT",
+            "forms": [
+              "{$WEAKPACKAGEUNIT ON|OFF}"
+            ],
+            "scope": "Local"
+          }
+        ]
+      }
     ]
   },
   "tokens": {
@@ -144,58 +656,62 @@
         ]
       },
       "string": {
-        "delimiter": "'",
-        "escape": "'' represents a single quote within the string",
-        "allow_newline": false,
-        "adjacent_concatenation": false,
-        "operator_concatenation": "Use '+' to concatenate literals explicitly.",
-        "regex_hint": "'([^']|'')*'"
-      },
-      "char_code": {
-        "forms": [
-          {
-            "prefix": "#",
-            "base": "decimal",
-            "digits": "[0-9]+"
-          },
-          {
-            "prefix": "#$",
-            "base": "hex",
-            "digits": "[0-9A-Fa-f]+"
-          },
-          {
-            "prefix": "#%",
-            "base": "binary",
-            "digits": "[01]+"
-          }
-        ],
-        "concatenation": "Adjacent char codes concatenate: #13#10",
-        "examples": [
-          "#65",
-          "#$41",
-          "#%01000001",
-          "#13#10"
-        ]
-      },
-      "char": {
-        "forms": [
-          "Single-quoted string of length 1 after char-code expansion",
-          "Single char_code"
-        ],
-        "examples": [
-          "'A'",
-          "#65"
-        ]
-      },
-      "boolean": {
-        "literals": [
-          "True",
-          "False"
-        ],
-        "case_insensitive": true
-      },
-      "nil": {
-        "literal": "nil"
+        "single_quoted": {
+          "delimiter": "'",
+          "escape": "'' represents a single quote within the string",
+          "allow_newline": false,
+          "adjacent_concatenation": false,
+          "operator_concatenation": "Use '+' or Concat() to concatenate literals explicitly.",
+          "regex_hint": "'([^']|'')*'"
+        },
+        "char_code": {
+          "forms": [
+            {
+              "prefix": "#",
+              "base": "decimal",
+              "digits": "[0-9]+"
+            },
+            {
+              "prefix": "#$",
+              "base": "hex",
+              "digits": "[0-9A-Fa-f]+"
+            },
+            {
+              "prefix": "#%",
+              "base": "binary",
+              "digits": "[01]+"
+            }
+          ],
+          "concatenation": "Adjacent char codes concatenate: #13#10",
+          "examples": [
+            "#65",
+            "#$41",
+            "#%01000001",
+            "#13#10"
+          ]
+        },
+        "multiline": {
+          "available_since": "Delphi 12",
+          "forms": [
+            {
+              "delimiter": "'''",
+              "description": "Triple-quoted multiline string literal"
+            }
+          ],
+          "notes": [
+            "Formatting and escaping rules follow RAD Studio 12 updates; see language docs/blog for details."
+          ]
+        },
+        "boolean": {
+          "literals": [
+            "True",
+            "False"
+          ],
+          "case_insensitive": true
+        },
+        "nil": {
+          "literal": "nil"
+        }
       }
     },
     "operators": [
@@ -235,16 +751,6 @@
       "[",
       "]"
     ],
-    "compound_tokens": {
-      "dotdot": {
-        "text": "..",
-        "kind": "range"
-      },
-      "assign": {
-        "text": ":=",
-        "kind": "assignment"
-      }
-    },
     "precedence_notes": [
       "When scanning, prefer the longest match (e.g., '..' before '.'; ':=' before ':')."
     ]
@@ -331,57 +837,37 @@
       "reintroduce",
       "abstract"
     ],
-            "directives": [
-            "absolute",
-            "abstract",
-            "assembler",
-            "automated",
-            "cdecl",
-            "contains",
-            "requires",
-            "default",
-            "deprecated",
-            "dispid",
-            "dynamic",
-            "experimental",
-            "export",
-            "external",
-            "far",
-            "final",
-            "forward",
-            "helper",
-            "implements",
-            "index",
-            "nodefault",
-            "object",
-            "pascal",
-            "package",
-            "platform",
-            "private",
-            "protected",
-            "public",
-            "published",
-            "read",
-            "readonly",
-            "register",
-            "reintroduce",
-            "reference",
-            "resources",
-            "safecall",
-            "sealed",
-            "static",
-            "stdcall",
-            "strict",
-            "stored",
-            "unsafe",
-            "varargs",
-            "virtual",
-            "write",
-            "writeonly"
-        ],
+    "contextual": [
+      "absolute",
+      "assembler",
+      "cdecl",
+      "register",
+      "pascal",
+      "safecall",
+      "stdcall",
+      "varargs",
+      "deprecated",
+      "platform",
+      "experimental",
+      "external",
+      "export",
+      "name",
+      "index",
+      "message",
+      "read",
+      "write",
+      "readonly",
+      "writeonly",
+      "stored",
+      "default",
+      "nodefault",
+      "package",
+      "contains",
+      "requires",
+      "implements"
+    ],
     "notes": [
-      "Directives (soft) keywords are recognized based on syntactic position; otherwise they may be tokenized as identifiers.",
-      "Some calling conventions and directives are treated as soft keywords."
+      "Contextual (soft) keywords are recognized based on syntactic position; otherwise they may be tokenized as identifiers."
     ]
   },
   "special_identifiers": [
@@ -402,8 +888,7 @@
   },
   "lexical_notes": [
     "The lexer should treat '$' and '%' as part of numeric literals when followed by valid digits.",
-    "Strings do not support backslash escapes; use doubled single quotes or char codes.",
-    "Square brackets are used for set constructors and attributes; they are ordinary delimiters at the lexical level.",
-    "Attribute syntax '[< ... >]' is parsed at the grammar level; lexically it is '[' '<' ... '>' ']'."
+    "Strings do not use backslash escapes; use doubled single quotes or char codes.",
+    "Square brackets are ordinary delimiters lexically; attribute syntax '[<...>]' is handled by the grammar."
   ]
 }
