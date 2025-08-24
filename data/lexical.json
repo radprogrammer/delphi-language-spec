@@ -1,0 +1,409 @@
+{
+  "meta": {
+    "name": "Delphi Lexical Specification",
+    "version": "0.3.0",
+    "date": "2025-08-24",
+    "language": "Delphi (latest)",
+    "case_insensitive_identifiers": true,
+    "source_encoding": "Unicode",
+    "notes": [
+      "ASCII-only regex hints are provided; engines differ in Unicode support.",
+      "Identifiers are case-insensitive for comparison but original casing should be preserved.",
+      "Compiler directives are handled prior to final tokenization for conditional compilation.",
+      "This file describes lexical structure only; parsing and semantics are defined elsewhere."
+    ]
+  },
+  "char_classes": {
+    "letter": "Unicode general category L (Lu, Ll, Lt, Lm, Lo)",
+    "digit": "[0-9]",
+    "hex_digit": "[0-9A-Fa-f]",
+    "bin_digit": "[01]",
+    "underscore": "_",
+    "whitespace": "[ \\t\\r\\n]",
+    "newline": "(\\r\\n|\\n|\\r)"
+  },
+  "whitespace": {
+    "skip": true,
+    "newline_terminators": [
+      "\\r\\n",
+      "\\n",
+      "\\r"
+    ]
+  },
+  "comments": {
+    "line": [
+      {
+        "open": "//",
+        "close": "<eol>"
+      }
+    ],
+    "block": [
+      {
+        "open": "{",
+        "close": "}",
+        "nesting": false,
+        "directives_allowed": true
+      },
+      {
+        "open": "(*",
+        "close": "*)",
+        "nesting": false,
+        "directives_allowed": true
+      }
+    ],
+    "notes": [
+      "Comments do not nest. A block comment consumes up to its first matching closer.",
+      "Compiler directives may appear inside block comments and are processed by the directives layer."
+    ]
+  },
+  "directives": {
+    "forms": [
+      {
+        "open": "{$",
+        "close": "}"
+      },
+      {
+        "open": "(*$",
+        "close": "*)"
+      }
+    ],
+    "conditionals": [
+      "IF",
+      "IFDEF",
+      "IFNDEF",
+      "ELSEIF",
+      "ELSE",
+      "ENDIF",
+      "IFEND"
+    ],
+    "boolean_functions": [
+      "Defined",
+      "Declared"
+    ],
+    "processing_order": "Preprocess before lexing to remove inactive regions.",
+    "examples": [
+      " {$IFDEF WIN64} {$ENDIF} ",
+      " (*$IF Defined(MSWINDOWS) and not Defined(CONSOLE)*) (*$IFEND*) "
+    ]
+  },
+  "tokens": {
+    "identifier": {
+      "description": "Case-insensitive identifier; must not start with a digit.",
+      "id_start": "letter | underscore",
+      "id_continue": "letter | digit | underscore",
+      "regex_unicode_hint": "[\\p{L}_][\\p{L}0-9_]*",
+      "regex_ascii_fallback": "[A-Za-z_][A-Za-z0-9_]*"
+    },
+    "literals": {
+      "integer": {
+        "decimal": {
+          "pattern": "0|[1-9][0-9_]*",
+          "digit_separator": "_",
+          "separator_rules": "Separators may appear between digits; not at the beginning or end; not adjacent to a base prefix."
+        },
+        "hex": {
+          "prefix": "$",
+          "pattern": "[0-9A-Fa-f][0-9A-Fa-f_]*",
+          "digit_separator": "_",
+          "example": "$DEAD_BEEF"
+        },
+        "binary": {
+          "prefix": "%",
+          "pattern": "[01][01_]*",
+          "digit_separator": "_",
+          "example": "%1010_0110"
+        },
+        "examples": [
+          "0",
+          "42",
+          "1_000",
+          "$FF",
+          "$DEAD_BEEF",
+          "%1010_0110"
+        ]
+      },
+      "real": {
+        "patterns": [
+          {
+            "pattern": "[0-9][0-9_]*\\.[0-9][0-9_]*([Ee][+-]?[0-9][0-9_]*)?"
+          },
+          {
+            "pattern": "[0-9][0-9_]*[Ee][+-]?[0-9][0-9_]*"
+          }
+        ],
+        "digit_separator": "_",
+        "notes": [
+          "Exponent uses E or e only.",
+          "At least one digit required on each side of the decimal point when the dot is present."
+        ],
+        "examples": [
+          "3.14",
+          "1.0E-3",
+          "10E3",
+          "1_000.25"
+        ]
+      },
+      "string": {
+        "delimiter": "'",
+        "escape": "'' represents a single quote within the string",
+        "allow_newline": false,
+        "adjacent_concatenation": false,
+        "operator_concatenation": "Use '+' to concatenate literals explicitly.",
+        "regex_hint": "'([^']|'')*'"
+      },
+      "char_code": {
+        "forms": [
+          {
+            "prefix": "#",
+            "base": "decimal",
+            "digits": "[0-9]+"
+          },
+          {
+            "prefix": "#$",
+            "base": "hex",
+            "digits": "[0-9A-Fa-f]+"
+          },
+          {
+            "prefix": "#%",
+            "base": "binary",
+            "digits": "[01]+"
+          }
+        ],
+        "concatenation": "Adjacent char codes concatenate: #13#10",
+        "examples": [
+          "#65",
+          "#$41",
+          "#%01000001",
+          "#13#10"
+        ]
+      },
+      "char": {
+        "forms": [
+          "Single-quoted string of length 1 after char-code expansion",
+          "Single char_code"
+        ],
+        "examples": [
+          "'A'",
+          "#65"
+        ]
+      },
+      "boolean": {
+        "literals": [
+          "True",
+          "False"
+        ],
+        "case_insensitive": true
+      },
+      "nil": {
+        "literal": "nil"
+      }
+    },
+    "operators": [
+      ":=",
+      "+",
+      "-",
+      "*",
+      "/",
+      "div",
+      "mod",
+      "and",
+      "or",
+      "xor",
+      "not",
+      "shl",
+      "shr",
+      "=",
+      "<>",
+      "<",
+      ">",
+      "<=",
+      ">=",
+      "in",
+      "is",
+      "as",
+      "@",
+      "^",
+      ".."
+    ],
+    "delimiters": [
+      ",",
+      ";",
+      ":",
+      ".",
+      "(",
+      ")",
+      "[",
+      "]"
+    ],
+    "compound_tokens": {
+      "dotdot": {
+        "text": "..",
+        "kind": "range"
+      },
+      "assign": {
+        "text": ":=",
+        "kind": "assignment"
+      }
+    },
+    "precedence_notes": [
+      "When scanning, prefer the longest match (e.g., '..' before '.'; ':=' before ':')."
+    ]
+  },
+  "keywords": {
+    "reserved": [
+      "and",
+      "array",
+      "as",
+      "asm",
+      "begin",
+      "case",
+      "class",
+      "const",
+      "constructor",
+      "destructor",
+      "dispinterface",
+      "div",
+      "do",
+      "downto",
+      "else",
+      "end",
+      "except",
+      "exports",
+      "file",
+      "finalization",
+      "finally",
+      "for",
+      "function",
+      "goto",
+      "if",
+      "implementation",
+      "in",
+      "inherited",
+      "initialization",
+      "inline",
+      "interface",
+      "is",
+      "label",
+      "library",
+      "mod",
+      "nil",
+      "not",
+      "object",
+      "of",
+      "or",
+      "out",
+      "packed",
+      "procedure",
+      "program",
+      "property",
+      "raise",
+      "record",
+      "repeat",
+      "resourcestring",
+      "set",
+      "shl",
+      "shr",
+      "string",
+      "then",
+      "threadvar",
+      "to",
+      "try",
+      "type",
+      "unit",
+      "until",
+      "uses",
+      "var",
+      "while",
+      "with",
+      "xor",
+      "helper",
+      "operator",
+      "private",
+      "protected",
+      "public",
+      "published",
+      "strict",
+      "static",
+      "sealed",
+      "virtual",
+      "override",
+      "overload",
+      "reintroduce",
+      "abstract"
+    ],
+            "directives": [
+            "absolute",
+            "abstract",
+            "assembler",
+            "automated",
+            "cdecl",
+            "contains",
+            "requires",
+            "default",
+            "deprecated",
+            "dispid",
+            "dynamic",
+            "experimental",
+            "export",
+            "external",
+            "far",
+            "final",
+            "forward",
+            "helper",
+            "implements",
+            "index",
+            "nodefault",
+            "object",
+            "pascal",
+            "package",
+            "platform",
+            "private",
+            "protected",
+            "public",
+            "published",
+            "read",
+            "readonly",
+            "register",
+            "reintroduce",
+            "reference",
+            "resources",
+            "safecall",
+            "sealed",
+            "static",
+            "stdcall",
+            "strict",
+            "stored",
+            "unsafe",
+            "varargs",
+            "virtual",
+            "write",
+            "writeonly"
+        ],
+    "notes": [
+      "Directives (soft) keywords are recognized based on syntactic position; otherwise they may be tokenized as identifiers.",
+      "Some calling conventions and directives are treated as soft keywords."
+    ]
+  },
+  "special_identifiers": [
+    "Self",
+    "Result"
+  ],
+  "case_insensitive": true,
+  "identifier_casefolding": "Unicode simple case folding for comparisons (implementation-defined details allowed).",
+  "numeric_separators": {
+    "enabled": true,
+    "separator_char": "_",
+    "rules": [
+      "Only between digits.",
+      "Not at the start or end of a digit run.",
+      "Not immediately next to the radix prefix ($ or %).",
+      "Not adjacent to the decimal point or exponent marker."
+    ]
+  },
+  "lexical_notes": [
+    "The lexer should treat '$' and '%' as part of numeric literals when followed by valid digits.",
+    "Strings do not support backslash escapes; use doubled single quotes or char codes.",
+    "Square brackets are used for set constructors and attributes; they are ordinary delimiters at the lexical level.",
+    "Attribute syntax '[< ... >]' is parsed at the grammar level; lexically it is '[' '<' ... '>' ']'."
+  ]
+}
