@@ -570,13 +570,3 @@ Produces:
 [if] [(] [Identifier] [<=] [Identifier] [)] [and] [not] [Identifier] [then]
   [Identifier] [(] [Identifier] [,] [HexInteger] [)] [;]
 ```
-
-## 12. Conformance
-
-A conforming implementation must:
-- Accept the token forms defined in §§6–9.
-- Apply maximal‑munch tokenization after directive processing.
-- Treat reserved words as non‑identifiers unless escaped with `&`.
-- Enforce string and numeric literal formation rules.
-
----
