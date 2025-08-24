@@ -53,7 +53,6 @@ Curly Brace : "{" .*? "}"
 StarParen   : "(*" .*? "*)"
 Line        : "//" [^\n\r]* (\r?\n|\r)?
 DocComment  : "///" .*? (end of line)
-DocBlock    : "{!" .*? "}"
 ```
 
 - A comment may contain any characters, including quotes and operators.
