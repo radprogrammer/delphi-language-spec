@@ -6,13 +6,19 @@ Targets the latest Delphi compiler, Delphi 12 Athens
 
 This chapter defines how source text is broken into tokens (identifiers, keywords, literals, operators, and punctuators). It is **normative** unless explicitly marked “informative”.
 
+## Prefix
+- This document uses ASCII. Source files may be Unicode.
+- The term "must" indicates a normative requirement.
+- Examples are informative, not normative.
+- References to data/lexical.json indicate the canonical machine-readable mapping for tools.
+
 ## 1. Source text and encoding
 
 1. A *source file* is a text file encoded as **UTF-8**.
 2. For backwards compatibility, source files may remain **ANSI** provided the compiler is instructed to use the correct code page, such as 1252 (Project → Options → Delphi Compiler → Compiling → Code generation → "Code page").
 3. Embarcadero [officially recommends](https://docwiki.embarcadero.com/RADStudio/en/Unicode_in_RAD_Studio) using UTF-8 and writing a **UTF-8 BOM** to each source file to ensure correct encoding recognition across environments.
 4. Characters outside the ASCII range may appear in comments, string literals, and identifiers as permitted below.
-5. A *line terminator* is one of: CRLF (\r\n), LF (\n), or CR (\r)
+5. A *line terminator* is one of: CRLF (\r\n), LF (\n), or CR (\r) with the Windows-based IDE and tooling preferring CRLF.
 
 
 ## 2. Lexical phases
@@ -29,7 +35,7 @@ This chapter defines how source text is broken into tokens (identifiers, keyword
 - `BinDigit` : `0` | `1`.
 - `WS` : spaces (blanks), horizontal tabs, vertical tabs, and newline characters
 - `Comments` : see [§4.2](#42-comments)
-> Delphi documentation classifies comments as whitespace. In this specification, whitespace characters and comments are described separately for clarity, but both act as token separators and are ignored by the compiler.
+> Delphi documentation can classify comments as whitespace. In this specification, whitespace characters and comments are described separately for clarity, but both act as token separators and are ignored by the compiler.
 
 ## 4. Whitespace and comments
 
@@ -51,8 +57,10 @@ DocBlock    : "{!" .*? "}"
 
 - A comment may contain any characters, including quotes and operators.
 - A comment may contain a *compiler directive* if the first non‑space after the opener is a `\$` ([§10](#10-compiler-directives-lexical recognition))
-- **Nesting is not supported**: if a comment opener occurs inside another comment of the same style, it is treated as text. The comment ends at the first closing delimiter encountered.
+- Block comments do not nest. A block comment consumes characters until its first matching closer.
 - The current [official recommendation](https://docwiki.embarcadero.com/RADStudio/en/Delphi_Comments) is to use Curly Brace instead of StarParen comments
+- Comments are ignored by the lexer once the directives layer has run.
+
 
 ## 5. Tokens
 
@@ -223,9 +231,15 @@ The following are formed from identifiers and act as operators/keywords:
 and or not xor div mod shl shr in as is on
 ```
 
-## 10. Compiler directives (lexical recognition)
+## 10. Compiler directives
 
-Directives are recognized only inside comments whose first non‑space character is `$` (or `{$` / `(*$`).
+### 10.1 Directive forms and preprocessing
+
+- A directive is text inside one of the following comment blocks:
+  - "{$" ... "}" (for example, {$R *.res}) using Curly Braces
+  - "(*$" ... "*)" using StarParen
+- The directives layer must run before final tokenization. Inactive regions eliminated by conditional directives are not lexed.
+- Implementations should support legacy $IF pairing with $ENDIF or $IFEND. The {$LEGACYIFEND ON|OFF} switch controls acceptance of $ENDIF for $IF blocks.
 
 ```
 DirectiveComment : '{' WS* '$' DirectiveBody '}'
@@ -233,7 +247,46 @@ DirectiveComment : '{' WS* '$' DirectiveBody '}'
 DirectiveBody    : { any character not closing the comment }
 ```
 
-Common directive families include conditional compilation (`$IF`, `$ELSE`, `$ENDIF`, `$IFDEF`, `$DEFINE`, `$UNDEF`), code generation options (e.g., `$H+`, `$TYPEDADDRESS`), resource inclusion (`$R`, `$INCLUDE`), and others.
+### 10.2 Conditional compilation
+
+Supported conditional directives include (names shown without the leading $):
+
+- IF, ELSEIF, ELSE, IFEND
+- IFDEF, IFNDEF, ENDIF
+- IFOPT
+- DEFINE, UNDEF
+
+Boolean functions in $IF expressions include Defined(SYMBOL) and Declared(IDENT).
+
+#### 10.2.1 Nested example
+
+```
+{$IF Defined(MSWINDOWS)}
+  {$IFDEF WIN64}
+    {$MESSAGE 'Compiling for Windows 64-bit'}
+  {$ELSE}
+    {$MESSAGE 'Compiling for Windows 32-bit'}
+  {$ENDIF}
+{$ELSEIF Defined(LINUX) and Defined(CPU64BITS)}
+  {$MESSAGE 'Compiling for Linux 64-bit'}
+{$ELSE}
+  {$MESSAGE 'Other platform'}
+{$IFEND}
+```
+
+### 10.3 Includes, resources, and other directives
+
+Common non-conditional directives include (not exhaustive):
+
+- Include/resource/link: INCLUDE or I, RESOURCE or R, LINK or L, RESOURCERESERVE.
+- Messages and diagnostics: MESSAGE, WARN, WARNINGS, HINTS, REGION or ENDREGION, TEXTBLOCK.
+- Code generation switches: ASSERTIONS, BOOLEVAL, CODEALIGN, EXTENDEDSYNTAX, EXCESSPRECISION, HIGHCHARUNICODE, IMPORTEDDATA, IOCHECKS, LOCALSYMBOLS, LONGSTRINGS, MINENUMSIZE, OPTIMIZATION, OVERFLOWCHECKS, POINTERMATH, RANGECHECKS, REALCOMPATIBILITY, STACKFRAMES, STRONGLINKTYPES, TYPEINFO, TYPEDADDRESS, VARSTRINGCHECKS, WRITEABLECONST, ZEROBASEDSTRINGS.
+- Linking/binary: ALIGN or A, APPTYPE, DEBUGINFO or D, DESCRIPTION, DYNAMICBASE, IMAGEBASE, IMPLICITBUILD, LARGEADDRESSAWARE, LIBPREFIX, LIBSUFFIX, LIBVERSION, NXCOMPAT, SetPE* family, TSAWARE, HIGHENTROPYVA.
+- RTTI and interop: RTTI, METHODINFO, HPPEMIT (including PUSH/POP/END), EXTERNALSYM, NODEFINE, OBJTYPENAME.
+- Packages/deployment: ALLOWBIND, ALLOWISOLATION, DENYPACKAGEUNIT, RUNONLY, WEAKPACKAGEUNIT.
+
+See data/lexical.json for a structured, exhaustive list.
+
 
 ## 11. Ambiguities and disambiguation
 
