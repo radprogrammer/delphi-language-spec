@@ -19,7 +19,7 @@
 
 1. Before tokenization, *compiler directives* (\$IF, \$IFDEF, \$DEFINE, \$INCLUDE, etc.; §10) are recognized inside comments and can conditionally remove or insert source text. Regions excluded by a false conditional directive are not tokenized.
 2. The source text is tokenized left‑to‑right using longest‑match ([maximal‑munch](https://www.devx.com/tip-bank/13828/)): at each position, the lexer produces the longest sequence of characters that forms a valid token. For example, :=, .., <=, and >= are each recognized as single tokens; if two dots appear in sequence they form .. (range). To avoid unintended .., insert whitespace where needed.
-4. Whitespace and comments are separators and do not produce tokens.
+3. Whitespace and comments are separators and do not produce tokens.
 
 ## 3. Character classes (informative notation)
 
@@ -49,10 +49,10 @@ DocComment  : "///" .*? (end of line)
 ```
 
 - A comment may contain any characters, including quotes and operators.
-- A comment may contain a *compiler directive* if the first non‑space after the opener is a `\$` ([§10](#10-compiler-directives-lexical recognition))
+- A comment may contain a *compiler directive* if the first non‑space after the opener is a `\$` ([§10](#10-compiler-directives-lexical-recognition))
 - Block comments do not nest. A block comment consumes characters until its first matching closer.
-- The current [official recommendation](https://docwiki.embarcadero.com/RADStudio/en/Delphi_Comments) is to use Curly Brace instead of StarParen comments
 - Comments are ignored by the lexer once the directives layer has run.
+- Informative (style): Embarcadero’s [guidelines](https://docwiki.embarcadero.com/RADStudio/en/Delphi_Comments) prefer { ... } for in-source documentation, (* ... *) for commenting out blocks (especially blocks that already contain comments), and // for transient edits.
 
 
 ## 5. Tokens
@@ -166,9 +166,7 @@ nil
 not
 object
 of
-on
 or
-out
 packed
 procedure
 program
@@ -354,6 +352,7 @@ StringChar    : any character except '\'' and line terminators
 - To include a single quote, write two consecutive single quotes: `'Don''t'`.
 
 #### 8.5.2 Multi-line string literals
+
 Multiline string literals (Delphi 12+) are delimited by a line-starting ''' and a closing ''' on a line by itself. 
 The closing delimiter's indentation defines a base indent that is stripped from all lines; lines may not be indented less than that base. 
 The final newline before the closing delimiter is omitted. An odd number of quotes greater than three (e.g., five or seven) may be used to allow embedding ''' within the literal.
@@ -369,7 +368,7 @@ Examples:
 ```
 'Hello, world'
 'Line break:' #13 #10
-'Path: ' 'C:\Temp'
+'Path: ' + 'C:\Temp'
 ```
 
 ### 8.6 Nil literal
@@ -389,7 +388,7 @@ The following tokens are produced as single tokens under maximal munch:
 The following are formed from identifiers and act as operators/keywords:
 
 ```
-and or not xor div mod shl shr in as is on
+and or not xor div mod shl shr in as is
 ```
 
 ## 10. Compiler directives
