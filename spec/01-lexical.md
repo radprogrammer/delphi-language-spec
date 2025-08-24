@@ -118,7 +118,7 @@ EscapedIdentifier  : '&' Identifier
 - Extended Identifier Usage (Informative)
   - Declaration sites: If the name equals a keyword, you must write & in the declaration (e.g., var &begin: Integer;). 
   - Use sites: You need & only when the position would otherwise be parsed as a keyword. After a qualifier (like `Unit.TypeName` or `Obj.Member`), the grammar expects an identifier, so the & is typically optional (e.g., `TMyType.type` is OK). 
-  - Token table: & is listed among Delphi's "special symbols," but in normal Delphi code its only language role is this prefix for extended identifiers (it isn’t a bitwise operator).
+  - Token table: & is listed among Delphi's "special symbols," but in normal Delphi code its only language role is this prefix for extended identifiers (it isn't a bitwise operator).
 
 ### 6.3 Identifier Examples
 
@@ -229,7 +229,12 @@ StringChar    : any character except '\'' and line terminators
 - Line terminators are not permitted inside a single string literal.
 - To include a single quote, write two consecutive single quotes: `'Don''t'`.
 
-#### 8.5.2 String constants
+#### 8.5.2 Multi-line string literals
+Multiline string literals (Delphi 12+) are delimited by a line-starting ''' and a closing ''' on a line by itself. 
+The closing delimiter's indentation defines a base indent that is stripped from all lines; lines may not be indented less than that base. 
+The final newline before the closing delimiter is omitted. An odd number of quotes greater than three (e.g., five or seven) may be used to allow embedding ''' within the literal.
+
+#### 8.5.3 String constants
 
 ```
 StringConstant : StringElem { WS* StringElem }
