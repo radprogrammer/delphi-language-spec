@@ -267,14 +267,3 @@ A conforming implementation must:
 - Enforce string and numeric literal formation rules.
 
 ---
-
-### Summary of Changes Made
-- Clarified **comments**: same‑delimiter `{}` and `(* *)` do not nest; added XMLDoc forms `///` and `{!...}`.
-- Fixed **integer literals**: `%` is binary, no octal, removed `&` as numeric prefix. Added underscore digit separators.
-- Corrected **real literals**: allow forms like `.5`, `123.`, `1.e10`.
-- Adjusted **keywords**: added `on`, removed duplicate `inline` in lists.
-- Corrected **operators**: removed unsupported C‑style ops, clarified `^` and added `on` to operator keywords.
-- Removed `{}` from general separators; they are comment delimiters only.
-- Reformatted tokenization example to show token boundaries clearly.
-- Clarified identifier rules: Unicode allowed, case‑insensitive with accented caveat.
-- Added **doc comments** to cover Delphi’s XMLDoc system.
