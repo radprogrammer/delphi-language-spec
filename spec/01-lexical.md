@@ -6,13 +6,6 @@
 *Target*: RAD Studio 12 Athens (Delphi)  
 *Scope*: This chapter defines the lexical elements of the Delphi language: source text, comments, compiler directives, identifiers, literals, operators, delimiters, and tokenization rules. Grammar and semantics are specified in later chapters.
 
-## Conventions
-- The term "must" indicates a normative requirement.
-- Examples are informative, not normative.
-- References to data/lexical.json indicate the canonical machine-readable mapping for tools.
-- data/lexical.json is the canonical machine-readable mapping for tools.
-
-
 ## 1. Source text and encoding
 
 1. A *source file* is a text file that is typically encoded as **UTF-8**.
