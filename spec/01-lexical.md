@@ -134,23 +134,154 @@ _AddRef            // leading underscore permitted
 The following are **reserved words**. They cannot be used as identifiers unless escaped with `&`.
 
 ```
-and array as asm begin case class const constructor destructor dispinterface
-div do downto else end except exports file finalization finally for function
-goto if implementation in inherited initialization inline interface is label
-library mod nil not object of on or out packed procedure program property raise
-record repeat resourcestring set shl shr string then threadvar to try type unit
-until uses var while with xor
+and
+array
+as
+asm
+begin
+case
+class
+const
+constructor
+destructor
+dispinterface
+div
+do
+downto
+else
+end
+except
+exports
+file
+finalization
+finally
+for
+function
+goto
+if
+implementation
+in
+inherited
+initialization
+inline
+interface
+is
+label
+library
+mod
+nil
+not
+object
+of
+on
+or
+out
+packed
+procedure
+program
+property
+raise
+record
+repeat
+resourcestring
+set
+shl
+shr
+string
+then
+threadvar
+to
+try
+type
+unit
+until
+uses
+var
+while
+with
+xor
 ```
+
+The following are reserved words _within class type declarations_ (otherwise treated as directives)
+````
+automated
+private
+protected
+public
+published
+````
+
+The following have special meanings and should be treated as reserved words
+````
+at
+on
+````
+
+Finally, the phrase `of object` is a special keyword phrase that is used to define method pointers
+
 
 The following **directive and modifier keywords** are reserved in their grammatical positions (method, type, field, and property directives; calling conventions; visibility specifiers; etc.).
 
+``` 
+absolute
+abstract
+assembler
+automated
+cdecl
+contains
+default
+delayed
+deprecated
+dispid
+dynamic
+experimental
+export
+external
+far
+final
+forward
+helper
+implements
+index
+inline
+library
+local
+message
+name
+near
+nodefault
+operator
+out
+overload
+override
+package
+pascal
+platform
+private
+protected
+public
+published
+read
+readonly
+reference
+register
+reintroduce
+requires
+resident
+safecall
+sealed
+static
+stdcall
+stored
+strict
+unsafe
+varargs
+virtual
+winapi
+write
+writeonly
 ```
-absolute abstract assembler automated cdecl contains requires default deprecated dispid
-dynamic experimental export external far final forward helper implements index nodefault
-object pascal package platform private protected public published read readonly register
-reintroduce reference resources safecall sealed static stdcall strict stored unsafe varargs
-virtual write writeonly
-```
+DocWiki notes: far, near, resident are obsolete; local was Kylix-only and ignored on Win32.
 
 ## 8. Literals
 
