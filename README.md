@@ -55,10 +55,6 @@ Contributions are welcome! Please:
 * [ ] Update **examples** to reflect changes.
 * [ ] Add a note to the **Changelog** if normative.
 
-## License
-
-This project is licensed under the Apache 2.0 License — see the [LICENSE](LICENSE) file for details.
-
 ## Status
 
 * ✅ Lexical structure in progress
