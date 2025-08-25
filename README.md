@@ -1,6 +1,8 @@
 # Delphi Language Specification
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![Status: Draft](https://img.shields.io/badge/Status-Draft-orange.svg)](./spec/01-lexical.md#status)
+
 
 
 ## Overview
