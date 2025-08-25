@@ -27,7 +27,7 @@ The specification is divided into numbered chapters, covering:
 
 * Provide a **canonical, open reference** for the [Delphi](http://embarcadero.com/products/delphi) language.
 * Capture **lexical rules, grammar, and semantics** in a structured way.
-* Enable tool authors (parsers, linters, formatters, compilers) to rely on a **machine-readable spec**.
+* Enable tool authors (parsers, linters, formatters) to rely on a **machine-readable spec**.
 * Maintain historical versions and **track changes** across Delphi releases.
 
 ## Structure
