@@ -9,19 +9,6 @@
 
 This repository provides a structured, version-controlled specification of the **Delphi programming language**. It is community-driven and unofficial, but designed to complement Embarcadero’s [official documentation](https://docwiki.embarcadero.com/RADStudio/en/Delphi_Language_Reference) with a normative, open, and maintained specification.
 
-The specification is divided into numbered chapters, covering:
-
-* **01 Lexical Structure** – identifiers, keywords, literals, operators, and compiler directives
-* **02 Directives** – conditional compilation and compiler options
-* **03 Grammar (EBNF)** – complete grammar of the Delphi language
-* **04 Semantics: Types** – built-in and user-defined types
-* **05 Semantics: Generics** – generic types and constraints
-* **06 Semantics: Classes** – class declarations, inheritance, visibility
-* **07 Semantics: Expressions** – operator precedence and evaluation
-* **08 Semantics: Statements** – control flow, blocks, procedures
-* **09 Attributes and Helpers** – metadata and helper types
-* **10 Operator Resolution** – overload resolution rules
-* **11 Managed Types and RTL Lifetimes** – memory management and finalization
 
 ## Goals
 
@@ -34,17 +21,17 @@ The specification is divided into numbered chapters, covering:
 
 ```
 ├── spec/
-│   ├── 01-lexical.md
-│   ├── 02-directives.md
-│   ├── 03-grammar-ebnf.md
-│   ├── 04-semantics-types.md
-│   ├── 05-semantics-generics.md
-│   ├── 06-semantics-classes.md
-│   ├── 07-semantics-expressions.md
-│   ├── 08-semantics-statements.md
-│   ├── 09-attributes-and-helpers.md
-│   ├── 10-operator-resolution.md
-│   └── 11-managed-types-and-rtlifetimes.md
+│   ├── 01-lexical.md                        # identifiers, keywords, literals, operators, and compiler directives
+│   ├── 02-directives.md                     # conditional compilation and compiler options
+│   ├── 03-grammar-ebnf.md                   # complete grammar of the Delphi language
+│   ├── 04-semantics-types.md                # built-in and user-defined types
+│   ├── 05-semantics-generics.md             # generic types and constraints
+│   ├── 06-semantics-classes.md              # class declarations, inheritance, visibility
+│   ├── 07-semantics-expressions.md          # operator precedence and evaluation
+│   ├── 08-semantics-statements.md           # control flow, blocks, procedures
+│   ├── 09-attributes-and-helpers.md         # metadata and helper types
+│   ├── 10-operator-resolution.md            # overload resolution rules
+│   └── 11-managed-types-and-rtlifetimes.md  # memory management and finalization
 ├── data/
 │   └── lexical.json   # machine-readable tables for keywords, operators, literals
 ├── tests/
@@ -75,6 +62,7 @@ This project is licensed under the Apache 2.0 License — see the [LICENSE](LICE
 ## Status
 
 * ✅ Lexical structure in progress
+* ✅ Directives in progress
 
 
 ---
