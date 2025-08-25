@@ -63,21 +63,35 @@ Tokens are classified as:
 - keywords (§7)
 - literals (§8)
 - operators and punctuators (§9)
+### 5.1 Special symbols (Normative)
 
-### 5.1 Longest-match rule
+The lexer recognizes the following **special symbols**. Unless otherwise stated, each line item is a single token under the longest-match rule (§5.2).
+
+Single-character symbols:
+`#  $  &  '  (  )  *  +  ,  -  .  /  :  ;  <  =  >  @  [  ]  ^  {  }`
+
+Paired symbols (two-character sequences):
+`(*   (.   *)   .)   ..   //   :=   <=   >=   <>`
+
+Notes
+- `(*` and `*)` are **comment delimiters**; they do not produce tokens inside the comment. `{` and `}` likewise delimit comments when used as `{ ... }`.
+- `(.` and `.)` are **synonyms** for `[` and `]` (kept for ISO-Pascal compatibility); they should be treated identically to brackets at the lexical level.
+- The following characters are **not** special symbols: `%  ?  \  !  "  _  |  ~`.
+
+### 5.2 Longest-match rule
 
 When two tokens share a prefix, the lexer must prefer the longest match. Examples:
 - .. must be recognized over . when both are possible.
 - := must be recognized over :.
 
-### 5.2 Delimiters and operators
+### 5.3 Delimiters and operators
 
 - Delimiters: , ; : . ( ) [ ]
 - Operators: := + - * / div mod and or xor not shl shr = <> < > <= >= in is as @ ^ ..
 
 Note: / is real division; div is integer division; mod is remainder. @ yields an address; ^ is pointer dereference.
 
-### 5.3 Disambiguation: dot vs range
+### 5.4 Disambiguation: dot vs range
 
 Because .. is a range operator, an integer followed by .. is not a real literal. Example:
 
@@ -87,7 +101,7 @@ Because .. is a range operator, an integer followed by .. is not a real literal.
 1.     // tokens: REAL_LITERAL(1.0)
 1.e3   // tokens: REAL_LITERAL(1.0e3)
 ```
-### 5.4 Disambiguation: Relational and generic type parameter delimiters
+### 5.5 Disambiguation: Relational and generic type parameter delimiters
 - `<` and `>` serve both as relational operators and as generic type parameter delimiters; resolved by the grammar. See spec/03-grammar-ebnf.md (Generics).
 Because Delphi allows generic methods and class/static members on generic types, a few edge cases do require symbol awareness
 (the parser may need to know whether a leading `Foo` is a type or a variable/function to choose between `Foo<T>(...)` as a generic call vs `Foo < T` as a comparison).
