@@ -34,6 +34,8 @@ This repository provides a structured, version-controlled specification of the *
 │   └── 11-managed-types-and-rtlifetimes.md  # memory management and finalization
 ├── data/
 │   └── lexical.json   # machine-readable tables for keywords, operators, literals
+├── grammar/
+│   └── Delphi.ebnf    # machine-readable grammar file
 ├── tests/
 │   └── tokenizer/     # tokenization validation examples
 └── README.md
