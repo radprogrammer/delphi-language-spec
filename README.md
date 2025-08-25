@@ -46,19 +46,14 @@ Contributions are welcome! Please:
 1. Open an **issue** to discuss proposed changes (lexical rules, grammar, semantics).
 2. Submit a **pull request** with edits to the relevant `spec/*.md` files.
 3. Ensure any changes to keywords, operators, or literals are reflected in `data/lexical.json`.
-4. Run the linter/CI checks locally (`npm run lint` or `make lint`).
+
 
 ### PR Template Checklist
 
 * [ ] Mark change as **Normative** (alters language rules) or **Informative** (examples, notes).
 * [ ] Update `/data/lexical.json` if tokens/keywords/literals are changed.
 * [ ] Update **examples** to reflect changes.
-* [ ] Add a note to the **Changelog** if normative.
 
-## Status
-
-* ✅ Lexical structure in progress
-* ✅ Directives in progress
 
 
 ---
