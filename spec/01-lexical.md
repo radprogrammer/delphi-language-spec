@@ -63,7 +63,7 @@ Tokens are classified as:
 - keywords (§7)
 - literals (§8)
 - operators and punctuators (§9)
-### 5.1 Special symbols (Normative)
+### 5.1 Special symbols
 
 The lexer recognizes the following **special symbols**. Unless otherwise stated, each line item is a single token under the longest-match rule (§5.2).
 
@@ -86,8 +86,8 @@ When two tokens share a prefix, the lexer must prefer the longest match. Example
 
 ### 5.3 Delimiters and operators
 
-- Delimiters: , ; : . ( ) [ ]
-- Operators: := + - * / div mod and or xor not shl shr = <> < > <= >= in is as @ ^ ..
+- Delimiters: `, ; : . ( ) [ ]`
+- Operators: `:= + - * / div mod and or xor not shl shr = <> < > <= >= in is as @ ^ ..`
 
 Note: / is real division; div is integer division; mod is remainder. @ yields an address; ^ is pointer dereference.
 
