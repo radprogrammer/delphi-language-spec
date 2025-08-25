@@ -23,7 +23,7 @@
 
 ## 3. Character classes (informative notation)
 
-- `Letter` : any Unicode letter ([general categories](https://www.unicode.org/reports/tr44/#General_Category_Values) Lu, Ll, Lt, Lm, Lo) and the connector underscore `_`.
+- `Letter` : any Unicode letter ([general categories](https://www.unicode.org/reports/tr44/#General_Category_Values) Lu, Ll, Lt, Lm, Lo) 
 - `Digit` : ASCII `0`..`9`.
 - `HexDigit` : `0`..`9` | `A`..`F` | `a`..`f`.
 - `BinDigit` : `0` | `1`.
@@ -118,6 +118,7 @@ ContChar           : Letter | Digit | '_'
 EscapedIdentifier  : '&' Identifier
 ```
 - Identifiers are case‑insensitive for purposes of declaration matching and reference. Note: accented letters are treated as distinct identifiers.
+- Only the first 255 chars of an identifier are significant
 
 ### 6.2 Extended Identifiers
 - If `&` directly precedes an identifier, the scanner produces a single IDENTIFIER token whose lexeme is the identifier characters only; the & is consumed and not emitted as a separate token. 
@@ -364,6 +365,7 @@ StringChar    : any character except '\'' and line terminators
 
 - Line terminators are not permitted inside a single string literal.
 - To include a single quote, write two consecutive single quotes: `'Don''t'`.
+- As of RAD Studio 12.0, string literals may exceed 255 chars
 
 #### 8.5.2 Multi-line string literals
 
@@ -438,7 +440,7 @@ Boolean functions in $IF expressions include:
 Expression grammar (informative sketch):
 - Expressions may use not, and, or, parentheses, and the comparison operators =, <>, <, >, <=, >= over integer constants and symbols. 
 
-### 10.3. $IF expression grammar (Normative, minimal)
+### 10.3 $IF expression grammar (Normative, minimal)
 
 ````
 if_expr      := or_expr ;
@@ -465,8 +467,7 @@ primary      := integer_literal
               | '(' if_expr ')' ;
 ````
 
-
-#### 10.2.1 Nested example
+### 10.4 Nested example
 
 ```
 {$IF Defined(MSWINDOWS)}
