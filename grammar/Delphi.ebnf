@@ -25,14 +25,14 @@ LibraryFile       = 'library' ProgHeading ';'
 
 PackageFile       = 'package' ProgHeading ';'
                     [ RequiresClause ] [ ContainsClause ]
-                    '.' ;
+                    'end' '.' ;
 
 UnitFile          = 'unit' UnitId ';'
                     InterfaceSection
                     ImplementationSection
-                    [ InitializationSection ] '.' ;
+                    InitSection '.' ;
 
-ProgHeading       = QualifiedIdent ;
+ProgHeading       = QualifiedIdent [ '(' IdentList ')' ] ;
 UnitId            = QualifiedIdent ;
 
 RequiresClause    = 'requires' UnitRefList ';' ;
@@ -48,21 +48,27 @@ InterfaceSection  = 'interface' [ UsesClause ] { InterfaceDecls } ;
 ImplementationSection
                   = 'implementation' [ UsesClause ] { ImplementationDecls } ;
 
-InitializationSection
-                  = 'initialization' StatementList
-                    [ 'finalization' StatementList ] ;
+InitSection       = 'initialization' StatementList
+                    [ 'finalization' StatementList ] 'end'
+                  | 'end' ;
 
 UsesClause        = 'uses' UsesList ';' ;
 UsesList          = UsesItem { ',' UsesItem } ;
 UsesItem          = QualifiedIdent [ 'in' STR ] ;
 
-Block             = { DeclarationPart } 'begin' StatementList 'end' ;
+Block             = { DeclarationPart }
+                    [ ExportsStmt ]
+                    CompoundStmt
+                    [ ExportsStmt ] ;
 DeclarationPart   = ConstSection
                   | TypeSection
                   | VarSection
                   | ThreadVarSection
                   | ResourceStringSection
+                  | LabelDeclSection
                   | RoutineDecl ;
+
+LabelDeclSection  = 'label' LabelId { ',' LabelId } ';' ;
 
 InterfaceDecls    = DeclarationPart ;
 ImplementationDecls = DeclarationPart ;
@@ -288,6 +294,8 @@ LabelId           = INT | ID ;
 Empty             = /* nothing */ ;
 
 SimpleStatement   = AssignOrCall
+                  | InlineVarDecl
+                  | InlineConstDecl
                   | 'inherited' [ QualifiedIdent [ ActualParams ] ]
                   | 'goto' LabelId ;
 
@@ -329,7 +337,7 @@ CaseSelector      = ConstExprList ':' Statement ;
 WhileStmt         = 'while' Expression 'do' Statement ;
 RepeatStmt        = 'repeat' StatementList 'until' Expression ;
 
-ForStmt           = 'for' Designator ':=' Expression ( 'to' | 'downto' ) Expression 'do' Statement ;
+ForStmt           = 'for' ( 'var' ID ':=' | Designator ':=' ) Expression ( 'to' | 'downto' ) Expression 'do' Statement ;
 
 ForInStmt         = 'for' ( 'var' ID ':' TypeRef 'in' Expression | ID 'in' Expression ) 'do' Statement ;
 
@@ -343,6 +351,9 @@ Handler           = 'on' [ ID ':' ] TypeRef 'do' StatementList ;
 FinallyPart       = 'finally' StatementList 'end' ;
 
 RaiseStmt         = 'raise' [ Expression [ 'at' Expression ] ] ;
+
+InlineVarDecl     = 'var' IdentList [ ':' TypeRef [ ':=' Expression ] ] ';' ;
+InlineConstDecl   = 'const' ID [ ':' TypeRef ] '=' Expression ';' ;
 
 (* ========= 11. Expressions (precedence) ========= *)
 Expression        = OrElseExpr ;
@@ -381,8 +392,8 @@ SetConstructor    = '[' [ SetElemList ] ']' ;
 SetElemList       = SetElem { ',' SetElem } ;
 SetElem           = Expression [ '..' Expression ] ;
 
-AnonymousMethod   = 'function' [ ParamList ] [ ':' TypeRef ] '=>' Statement
-                  | 'procedure' [ ParamList ] '=>' Statement ;
+AnonymousMethod   = 'function' [ ParamList ] [ ':' TypeRef ] AnonymousBlock
+                  | 'procedure' [ ParamList ] AnonymousBlock ;
 
 (* ========= 12. Constant expressions ========= *)
 ConstExpr         = ConstRelExpr ;
