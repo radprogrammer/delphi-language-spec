@@ -2,10 +2,10 @@
 ## 03 Grammar — EBNF
 
 ### Status
-Draft v0.1.0 — 2025-08-24  
+Draft v0.2.0 — 2025-08-24  
 Target: RAD Studio 12 Athens (Delphi)  
-Scope: This chapter gives a **complete EBNF grammar** for Delphi source files (programs, libraries, packages, and units), declarations (types, variables, constants, resourcestrings), **classes/records/interfaces**, **generics** (types and methods), **procedural types** (including anonymous-method and method-pointer forms), **attributes**, **helpers**, **statements**, and **expressions** with precedence.  
-Lexical rules (identifiers, literals, operators, comments, directives) are defined in **01‑lexical.md**; semantic rules appear in chapters 04–11.
+Scope: This chapter gives a **complete EBNF grammar** for Delphi source files (programs, libraries, packages, and units), declarations (types, variables, constants, resourcestrings, labels), **classes/records/interfaces**, **generics** (types and methods), **procedural types** (including anonymous-method and method-pointer forms), **attributes**, **helpers**, **statements**, and **expressions** with precedence.  
+Lexical rules (identifiers, literals, operators, comments, directives) are defined in **01‑lexical.md**. Semantics appear in chapters 04–11.
 
 > **Preprocessing layer.** Compiler directives (e.g., `{$IF}`, `{$DEFINE}`, `{$INCLUDE}`) are recognized **inside comments** and processed **before** tokenization (§02). Inactive regions removed by conditionals are **not** parsed.
 
@@ -13,7 +13,7 @@ Lexical rules (identifiers, literals, operators, comments, directives) are defin
 
 ### EBNF notation (legend)
 
-We use a conventional EBNF close to ISO/IEC 14977:
+We use ISO/IEC 14977‑style EBNF:
 
 ```
 A          := B | C         // choice
@@ -42,18 +42,26 @@ ProgramFile       := 'program' ProgHeading ';'
 
 LibraryFile       := 'library' ProgHeading ';'
                      UsesClause?
-                     Block '.' ;
+                     { DeclarationPart }               // global decls
+                     ExportsSection?                   // allowed before block
+                     CompoundStmt                      // optional init code
+                     ExportsSection?                   // allowed after block
+                     '.' ;
 
 PackageFile       := 'package' ProgHeading ';'
                      RequiresClause? ContainsClause?
-                     '.' ;
+                     'end' '.' ;
 
 UnitFile          := 'unit' UnitId ';'
                      InterfaceSection
                      ImplementationSection
-                     InitializationSection? '.' ;
+                     UnitEnd '.' ;
 
-ProgHeading       := QualifiedIdent ;
+UnitEnd           := 'initialization' StatementList
+                     ( 'finalization' StatementList )? 'end'
+                   | 'end' ;
+
+ProgHeading       := QualifiedIdent ( '(' IdentList ')' )? ;
 UnitId            := QualifiedIdent ;
 
 RequiresClause    := 'requires' UnitRefList ';' ;
@@ -62,8 +70,10 @@ ContainsClause    := 'contains' UnitAliasList ';' ;
 UnitRefList       := UnitRef { ',' UnitRef } ;
 UnitAliasList     := UnitAlias { ',' UnitAlias } ;
 UnitRef           := QualifiedIdent ;
-UnitAlias         := QualifiedIdent 'in' STR?  // file path string optional
-                   | QualifiedIdent ;          // pure name
+UnitAlias         := QualifiedIdent ( 'in' STR )? ;
+
+ExportsSection    := 'exports' ExportsItem { ',' ExportsItem } ';' ;
+ExportsItem       := Ident ( 'name' STR | 'index' INT )* ;
 ```
 
 ---
@@ -80,30 +90,33 @@ ImplementationSection
                       UsesClause?
                       ImplementationDecls* ;
 
-InitializationSection
-                   := 'initialization' StatementList
-                      ( 'finalization' StatementList )? ;
-
 UsesClause         := 'uses' UsesList ';' ;
 UsesList           := UsesItem { ',' UsesItem } ;
 UsesItem           := QualifiedIdent ( 'in' STR )? ;
 
-Block              := DeclarationPart* 'begin' StatementList 'end' ;
-DeclarationPart    := ConstSection
+Block              := DeclarationPart* CompoundStmt ;
+CompoundStmt       := 'begin' StatementList 'end' ;
+
+DeclarationPart    := LabelDeclSection
+                    | ConstSection
                     | TypeSection
                     | VarSection
                     | ThreadVarSection
                     | ResourceStringSection
                     | RoutineDecl ;
+
 InterfaceDecls     := DeclarationPart ;
 ImplementationDecls:= DeclarationPart ;
 ```
 
 ---
 
-### 3. Declarations (const, type, var, resourcestring, threadvar)
+### 3. Declarations (const, type, var, resourcestring, threadvar, labels)
 
 ```
+LabelDeclSection  := 'label' LabelId ( ',' LabelId )* ';' ;
+LabelId           := INT | ID ;
+
 ConstSection      := 'const' ConstDecl+ ;
 ConstDecl         := Attributes? ID (':' TypeRef)? '=' ConstExpr ';' ;
 
@@ -112,13 +125,13 @@ ResourceStringSection
 ResourceStringDecl := Attributes? ID '=' STR ';' ;
 
 TypeSection       := 'type' TypeDecl+ ;
-TypeDecl          := Attributes? ID '=' TypeDef ';' ;
+TypeDecl          := Attributes? ID TypeParamClause? '=' TypeDef ';' ;
 
 VarSection        := 'var' VarDecl+ ;
 ThreadVarSection  := 'threadvar' VarDecl+ ;
 
 VarDecl           := Attributes? IdentList ':' TypeRef ( '=' ConstExpr )? ';' ;
-IdentList         := ID { ',' ID } ;
+IdentList         := ID ( ',' ID )* ;
 ```
 
 ---
@@ -136,27 +149,29 @@ TypeDef           := AliasType
                    | ClassType
                    | InterfaceType
                    | PointerType
+                   | ClassRefType
                    | ProcType
                    | HelperType ;
 
-AliasType         := 'type'? TypeRef ;   // 'type' forces identity, see §04
+AliasType         := 'type'? TypeRef ;   // 'type' forces identity (§04)
 
 SubrangeType      := ConstExpr '..' ConstExpr ;
 
 EnumType          := '(' EnumList ')' ;
-EnumList          := EnumItem { ',' EnumItem } ;
+EnumList          := EnumItem ( ',' EnumItem )* ;
 EnumItem          := ID ( '=' ConstExpr )? ;
 
 SetType           := 'set' 'of' OrdinalType ;
-OrdinalType       := TypeRef ; // must denote ordinal type
+OrdinalType       := TypeRef ; // must denote ordinal type (semantic)
 
 ArrayType         := 'array' ( '[' ArrayIndexList ']' )? 'of' TypeRef ;
-ArrayIndexList    := ArrayIndex { ',' ArrayIndex } ;
+ArrayIndexList    := ArrayIndex ( ',' ArrayIndex )* ;
 ArrayIndex        := SubrangeType | TypeRef ; // static array; absent => dynamic array
 
 FileType          := 'file' ('of' TypeRef)? ;
 
 PointerType       := '^' TypeRef ;
+ClassRefType      := 'class' 'of' TypeRef ;
 
 ProcType          := 'procedure' ParamList? MethodSpec?
                    | 'function'  ParamList? ':' TypeRef MethodSpec?
@@ -174,39 +189,35 @@ RecordHelperType  := 'record' 'helper' 'for' TypeRef
                      RecordHelperBody 'end' ;
 ```
 
-**Notes**  
+**Notes.**  
 - `AliasType` with the `type` keyword (e.g., `type T = type U;`) preserves **identity** (§04).  
 - `ArrayType` without brackets is a **dynamic array**; with brackets is **static**.  
-- `reference to` denotes an **anonymous‑method** type; `of object` denotes a **method pointer** type.
+- `reference to` denotes an **anonymous‑method** type; `of object` denotes a **method pointer** type.  
+- **Pointer** (`^ T`) and **class reference** (`class of T`) are separate type constructors (not suffixes).
 
 ---
 
 ### 5. Type references and generics
 
 ```
-TypeRef           := QualifiedIdent GenericArgs? TypeSuffix* ;
+TypeRef           := NamedTypeRef | PointerType | ClassRefType ;
 
-QualifiedIdent    := ID { '.' ID } ;
+NamedTypeRef      := QualifiedIdent GenericArgs? ;
+
+QualifiedIdent    := ID ( '.' ID )* ;
 
 GenericArgs       := '<' TypeArgList '>' ;
-TypeArgList       := TypeRef { ',' TypeRef } ;
-
-TypeSuffix        := '^'              // pointer deref in types like ^T
-                   | 'class'          // class reference: class of T
-                   | 'of' TypeRef     // class of T (combined form)
-                   ;
+TypeArgList       := TypeRef ( ',' TypeRef )* ;
 
 TypeParamClause   := '<' TypeParamList '>' ;
-TypeParamList     := TypeParam { ',' TypeParam } ;
+TypeParamList     := TypeParam ( ',' TypeParam )* ;
 TypeParam         := ID ( ':' TypeConstraints )? ;
 
-TypeConstraints   := TypeConstraint { ',' TypeConstraint } ;
+TypeConstraints   := TypeConstraint ( ',' TypeConstraint )* ;
 TypeConstraint    := 'constructor'
                    | 'class'
                    | 'record'
                    | TypeRef ;    // interface or specific class
-
-GenericTypeDecl   := ID TypeParamClause ;   // used in ClassType, RecordType, etc.
 ```
 
 **Disambiguation note.** The `<` following a **type identifier** begins `GenericArgs`; `<` in expressions is a relational operator. Parsing contexts (TypeRef vs Expression) resolve the ambiguity (§05).
@@ -219,7 +230,7 @@ GenericTypeDecl   := ID TypeParamClause ;   // used in ClassType, RecordType, et
 ClassType         := 'class' ClassHead? ClassBody 'end' ;
 ClassHead         := ClassModifiers? AncestorList? ;
 ClassModifiers    := ( 'sealed' | 'abstract' )+ ;
-AncestorList      := '(' AncestorType { ',' InterfaceTypeRef } ')' ;
+AncestorList      := '(' AncestorType ( ',' InterfaceTypeRef )* ')' ;
 AncestorType      := TypeRef ;
 InterfaceTypeRef  := TypeRef ;
 
@@ -248,17 +259,17 @@ RecordType        := 'record' RecordBody 'end' ;
 RecordBody        := RecordFieldSection* VariantPart? ;
 RecordFieldSection:= (FieldDecl | MethodDecl | PropertyDecl | NestedTypeDecl) ;
 
-VariantPart       := 'case' (ID ':' TypeRef | TypeRef)? 'of'
+VariantPart       := 'case' (ID ':' TypeRef | TypeRef) 'of'
                      VariantSelectorList ';'? ;
 
 VariantSelectorList
-                   := VariantSelector { ';' VariantSelector } ;
+                   := VariantSelector ( ';' VariantSelector )* ;
 VariantSelector   := ConstExprList ':' '(' RecordFieldSection* ')' ;
-ConstExprList     := ConstExpr { ',' ConstExpr } ;
+ConstExprList     := ConstExpr ( ',' ConstExpr )* ;
 
 InterfaceType     := 'interface' InterfaceHead? InterfaceBody 'end' ;
 InterfaceHead     := '(' InterfaceTypeRefList ')' ;
-InterfaceTypeRefList := InterfaceTypeRef { ',' InterfaceTypeRef } ;
+InterfaceTypeRefList := InterfaceTypeRef ( ',' InterfaceTypeRef )* ;
 InterfaceBody     := InterfaceMember* ;
 InterfaceMember   := MethodHeading ';'  // no implementation
                    | PropertyDecl ;
@@ -282,7 +293,7 @@ RoutineName       := QualifiedIdent ;
 
 GenericParams     := TypeParamClause ;
 
-ParamList         := '(' ParamGroup { ';' ParamGroup } ')' ;
+ParamList         := '(' ParamGroup ( ';' ParamGroup )* ')' ;
 ParamGroup        := ParamModifier? IdentList ':' TypeRef ( '=' ConstExpr )? ;
 ParamModifier     := 'const' | 'var' | 'out' ;
 
@@ -337,13 +348,13 @@ PropertyDecl      := Attributes? 'property' PropertyName PropertyIndex? ':' Type
 PropertyName      := ID ;
 
 PropertyIndex     := '[' PropertyParamList ']' ;
-PropertyParamList := PropertyParam { ';' PropertyParam } ;
+PropertyParamList := PropertyParam ( ';' PropertyParam )* ;
 PropertyParam     := ('const')? IdentList ':' TypeRef ;
 
 PropertySpecifiers:= ( 'read'  Accessor )
                      ( 'write' Accessor )?
                      ( 'stored' (ID | 'True' | 'False') )?
-                     ( 'default' ConstExpr | 'nodefault' )?
+                     ( ( 'default' ConstExpr ) | 'nodefault' )?
                      ( 'implements' TypeRef (',' TypeRef)* )?
                      ( 'index' ConstExpr )?
                      ( 'dispID' ConstExpr )? ;
@@ -357,11 +368,11 @@ Accessor          := ID | QualifiedIdent ;  // method or field
 
 ```
 Attributes        := '[' AttrList ']' ;
-AttrList          := Attribute { ',' Attribute } ;
+AttrList          := Attribute ( ',' Attribute )* ;
 Attribute         := AttrType AttrArgs? ;
 AttrType          := QualifiedIdent ; // 'Attribute' suffix may be omitted
 AttrArgs          := '(' AttrArgList? ')' ;
-AttrArgList       := ConstExpr { ',' ConstExpr } ;
+AttrArgList       := ConstExpr ( ',' ConstExpr )* ;
 ```
 
 Attributes may precede **type, routine, field, property, parameter** declarations. Variable‑level attributes have effect only if compiler‑recognized (§09).
@@ -379,13 +390,17 @@ Statement         := LabeledStatement
                    | Empty ;
 
 LabeledStatement  := LabelId ':' Statement ;
-LabelId           := INT | ID ;
 
 Empty             := /* nothing */ ;
 
 SimpleStatement   := AssignOrCall
+                   | InlineVarDecl
+                   | InlineConstDecl
                    | 'inherited' ( QualifiedIdent? ActualParams? )?
                    | 'goto' LabelId ;
+
+InlineVarDecl     := 'var'   IdentList ( ':' TypeRef ( ':=' Expression )? )? ';' ;
+InlineConstDecl   := 'const' ID ( ':' TypeRef )? '=' Expression ';' ;
 
 AssignOrCall      := Designator ':=' Expression
                    | Designator ActualParams? ;
@@ -399,7 +414,7 @@ Selector          := '.' ID
                    | '^' ;
 
 ActualParams      := '(' ArgList? ')' ;
-ArgList           := Arg { ',' Arg } ;
+ArgList           := Arg ( ',' Arg )* ;
 Arg               := Expression | ID ':' Expression ;
 
 StructuredStatement
@@ -414,25 +429,24 @@ StructuredStatement
                     | TryStmt
                     | RaiseStmt ;
 
-CompoundStmt      := 'begin' StatementList 'end' ;
-
 ConditionalStmt   := 'if' Expression 'then' Statement ('else' Statement)? ;
 
 CaseStmt          := 'case' Expression 'of' CaseSelectorList CaseElse? 'end' ;
-CaseSelectorList  := CaseSelector { ';' CaseSelector } ;
+CaseSelectorList  := CaseSelector ( ';' CaseSelector )* ;
 CaseSelector      := ConstExprList ':' Statement ;
 CaseElse          := ';' 'else' Statement ;
 
 WhileStmt         := 'while' Expression 'do' Statement ;
 RepeatStmt        := 'repeat' StatementList 'until' Expression ;
 
-ForStmt           := 'for' Designator ':=' Expression ('to' | 'downto') Expression 'do' Statement ;
+ForStmt           := 'for' ( 'var' ID ':=' | Designator ':=' )
+                     Expression ('to' | 'downto') Expression 'do' Statement ;
 
 ForInStmt         := 'for' ('var' ID ':' TypeRef 'in' Expression
                       | ID 'in' Expression) 'do' Statement ;
 
 WithStmt          := 'with' ExprList 'do' Statement ;
-ExprList          := Expression { ',' Expression } ;
+ExprList          := Expression ( ',' Expression )* ;
 
 TryStmt           := 'try' StatementList ( ExceptPart | FinallyPart ) 'end' ;
 ExceptPart        := 'except' HandlerList 'end' ;
@@ -483,11 +497,13 @@ Selector          := '.' ID
 Literal           := INT | REAL | STR | CharCode | 'True' | 'False' ;
 
 SetConstructor    := '[' SetElemList? ']' ;
-SetElemList       := SetElem { ',' SetElem } ;
+SetElemList       := SetElem ( ',' SetElem )* ;
 SetElem           := Expression ( '..' Expression )? ;
 
-AnonymousMethod   := 'function' ParamList? ( ':' TypeRef )? '=>' Statement
-                   | 'procedure' ParamList? '=>' Statement ;
+AnonymousMethod   := 'function' ParamList? ( ':' TypeRef )? AnonymousBlock
+                   | 'procedure' ParamList? AnonymousBlock ;
+
+AnonymousBlock    := 'begin' StatementList 'end' ;
 ```
 
 **Notes.**  
@@ -517,34 +533,10 @@ Only a subset is valid based on context (case labels, set bounds, etc., see §04
 
 ---
 
-### 13. Packages: `requires` and `contains` (syntactic)
-
-Already covered in §1; semantics (design/package system) are out of scope for the grammar.
-
----
-
-### 14. Helpers (syntactic)
-
-Helpers are declared via **HelperType** in §4. The bodies use the same **ClassMemberSection** / **RecordFieldSection** forms as classes/records, except that helpers cannot declare instance fields (enforced semantically).
-
----
-
-### 15. Generics (summary of placements)
-
-- **Type parameter clauses** are allowed on: `class`, `record`, `interface`, **procedural types** (by wrapping in a generic type), and **methods** (`procedure`/`function` headings).  
-- **Type argument lists** (`<...>`) are allowed after **type identifiers** in **type/constructor** contexts and after **class identifiers** when denoting nested types (`TFoo<Integer>.TBar`). Disambiguation from `<`/`>` relational operators is per syntactic context (§05).
-
----
-
-### 16. Lexical tokens (reference)
-
-Terminals such as `'+'`, `'..'`, `'('`, `')'`, `'['`, `']'`, `','`, `';'`, `':'`, `':='`, `'@'`, `'^'`, relational operators, and keywords are defined in **01‑lexical.md**. The **longest‑match** rule applies (§01 §5.1/5.3).
-
----
-
-### 17. Conformance notes
+### 13. Conformance notes
 
 - The grammar aims to be **LALR(1)** friendly. A production split across **type vs expression** contexts avoids the classic `< >` ambiguity for generics.  
 - Some restrictions (e.g., what qualifies as an **ordinal** type, property specifier restrictions, helper limitations, operator availability) are **semantic** and enforced in chapters 04–11.  
-- Compiler directives in comments may elide whole subtrees before parsing; ensure your preprocessor honors §02.
-
+- Compiler directives in comments may elide whole subtrees before parsing; ensure your preprocessor honors §02.  
+- Anonymous‑method *literals* use Delphi’s real syntax: `function … begin … end` / `procedure … begin … end` (no `=>`).  
+- Inline *block‑scoped* `var`/`const` statements are included.
