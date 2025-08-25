@@ -1,0 +1,400 @@
+(*
+  Delphi EBNF — ISO/IEC 14977 style
+  Canonical machine-readable grammar corresponding to spec/03-grammar-ebnf.md
+  Target: RAD Studio 12 (Athens)
+  Notes:
+    - Keywords are case-insensitive terminals written in single quotes.
+    - Token kinds (ID, INT, REAL, STR, CharCode) come from spec/01-lexical.md.
+    - { X }  means zero or more; [ X ] means optional.
+    - This grammar separates preprocessing (directives) from parsing (§02).
+*)
+
+(* ========= 0. Tokens (references to 01-lexical) ========= *)
+(* ID, INT, REAL, STR, CharCode, and punctuation tokens like '+', ':=', '..', etc. *)
+
+(* ========= 1. Compilation units ========= *)
+SourceFile        = ProgramFile | LibraryFile | PackageFile | UnitFile ;
+
+ProgramFile       = 'program' ProgHeading ';'
+                    [ UsesClause ]
+                    Block '.' ;
+
+LibraryFile       = 'library' ProgHeading ';'
+                    [ UsesClause ]
+                    Block '.' ;
+
+PackageFile       = 'package' ProgHeading ';'
+                    [ RequiresClause ] [ ContainsClause ]
+                    '.' ;
+
+UnitFile          = 'unit' UnitId ';'
+                    InterfaceSection
+                    ImplementationSection
+                    [ InitializationSection ] '.' ;
+
+ProgHeading       = QualifiedIdent ;
+UnitId            = QualifiedIdent ;
+
+RequiresClause    = 'requires' UnitRefList ';' ;
+ContainsClause    = 'contains' UnitAliasList ';' ;
+
+UnitRefList       = UnitRef { ',' UnitRef } ;
+UnitAliasList     = UnitAlias { ',' UnitAlias } ;
+UnitRef           = QualifiedIdent ;
+UnitAlias         = QualifiedIdent [ 'in' STR ] ;
+
+(* ========= 2. Sections and blocks ========= *)
+InterfaceSection  = 'interface' [ UsesClause ] { InterfaceDecls } ;
+ImplementationSection
+                  = 'implementation' [ UsesClause ] { ImplementationDecls } ;
+
+InitializationSection
+                  = 'initialization' StatementList
+                    [ 'finalization' StatementList ] ;
+
+UsesClause        = 'uses' UsesList ';' ;
+UsesList          = UsesItem { ',' UsesItem } ;
+UsesItem          = QualifiedIdent [ 'in' STR ] ;
+
+Block             = { DeclarationPart } 'begin' StatementList 'end' ;
+DeclarationPart   = ConstSection
+                  | TypeSection
+                  | VarSection
+                  | ThreadVarSection
+                  | ResourceStringSection
+                  | RoutineDecl ;
+
+InterfaceDecls    = DeclarationPart ;
+ImplementationDecls = DeclarationPart ;
+
+(* ========= 3. Declarations ========= *)
+ConstSection      = 'const' { ConstDecl } ;
+ConstDecl         = [ Attributes ] ID [ ':' TypeRef ] '=' ConstExpr ';' ;
+
+ResourceStringSection = 'resourcestring' { ResourceStringDecl } ;
+ResourceStringDecl    = [ Attributes ] ID '=' STR ';' ;
+
+TypeSection       = 'type' { TypeDecl } ;
+TypeDecl          = [ Attributes ] ID '=' TypeDef ';' ;
+
+VarSection        = 'var' { VarDecl } ;
+ThreadVarSection  = 'threadvar' { VarDecl } ;
+
+VarDecl           = [ Attributes ] IdentList ':' TypeRef [ '=' ConstExpr ] ';' ;
+IdentList         = ID { ',' ID } ;
+
+(* ========= 4. Type definitions ========= *)
+TypeDef           = AliasType
+                  | SubrangeType
+                  | EnumType
+                  | SetType
+                  | ArrayType
+                  | FileType
+                  | RecordType
+                  | ClassType
+                  | InterfaceType
+                  | PointerType
+                  | ClassRefType
+                  | ProcType
+                  | HelperType ;
+
+AliasType         = [ 'type' ] TypeRef ;  (* 'type' forces identity *)
+
+SubrangeType      = ConstExpr '..' ConstExpr ;
+
+EnumType          = '(' EnumList ')' ;
+EnumList          = EnumItem { ',' EnumItem } ;
+EnumItem          = ID [ '=' ConstExpr ] ;
+
+SetType           = 'set' 'of' OrdinalType ;
+OrdinalType       = TypeRef ;  (* semantic check: must denote ordinal type *)
+
+ArrayType         = 'array' [ '[' ArrayIndexList ']' ] 'of' TypeRef ;
+ArrayIndexList    = ArrayIndex { ',' ArrayIndex } ;
+ArrayIndex        = SubrangeType | TypeRef ;  (* static arrays when present; absent => dynamic *)
+
+FileType          = 'file' [ 'of' TypeRef ] ;
+
+PointerType       = '^' TypeRef ;
+ClassRefType      = 'class' 'of' TypeRef ;
+
+ProcType          = 'procedure' [ ParamList ] [ MethodSpec ]
+                  | 'function'  [ ParamList ] ':' TypeRef [ MethodSpec ]
+                  | 'reference' 'to' ( 'procedure' [ ParamList ]
+                                        | 'function'  [ ParamList ] ':' TypeRef ) ;
+
+MethodSpec        = [ 'of' 'object' ] ;  (* method pointer if present *)
+
+HelperType        = ClassHelperType | RecordHelperType ;
+
+ClassHelperType   = 'class' 'helper' 'for' TypeRef
+                    ClassHelperBody 'end' ;
+
+RecordHelperType  = 'record' 'helper' 'for' TypeRef
+                    RecordHelperBody 'end' ;
+
+ClassHelperBody   = { ClassMemberSection } ;
+RecordHelperBody  = { RecordFieldSection } ;
+
+(* ========= 5. Type references and generics ========= *)
+TypeRef           = NamedTypeRef | PointerType | ClassRefType ;
+
+NamedTypeRef      = QualifiedIdent [ GenericArgs ] ;
+
+QualifiedIdent    = ID { '.' ID } ;
+
+GenericArgs       = '<' TypeArgList '>' ;
+TypeArgList       = TypeRef { ',' TypeRef } ;
+
+(* ========= 6. Classes, records, interfaces ========= *)
+ClassType         = 'class' [ ClassHead ] ClassBody 'end' ;
+ClassHead         = [ ClassModifiers ] [ AncestorList ] ;
+ClassModifiers    = ( 'sealed' | 'abstract' ) { 'sealed' | 'abstract' } ;
+AncestorList      = '(' AncestorType [ ',' InterfaceTypeRef { ',' InterfaceTypeRef } ] ')' ;
+AncestorType      = TypeRef ;
+InterfaceTypeRef  = TypeRef ;
+
+ClassBody         = { ClassMemberSection } ;
+ClassMemberSection= [ Visibility ] { ClassMember } ;
+Visibility        = 'strict' 'private'
+                  | 'strict' 'protected'
+                  | 'private'
+                  | 'protected'
+                  | 'public'
+                  | 'published' ;
+
+ClassMember       = FieldDecl
+                  | MethodDecl
+                  | PropertyDecl
+                  | ClassVarDecl
+                  | NestedTypeDecl
+                  | ConstDecl ;
+
+ClassVarDecl      = 'class' 'var' { VarDecl } ;
+NestedTypeDecl    = 'type' { TypeDecl } ;
+
+RecordType        = 'record' RecordBody 'end' ;
+RecordBody        = { RecordFieldSection } [ VariantPart ] ;
+RecordFieldSection= FieldDecl | MethodDecl | PropertyDecl | NestedTypeDecl ;
+
+VariantPart       = 'case' ( ID ':' TypeRef | TypeRef ) 'of'
+                    VariantSelectorList [ ';' ] ;
+
+VariantSelectorList = VariantSelector { ';' VariantSelector } ;
+VariantSelector   = ConstExprList ':' '(' { RecordFieldSection } ')' ;
+ConstExprList     = ConstExpr { ',' ConstExpr } ;
+
+InterfaceType     = 'interface' [ InterfaceHead ] InterfaceBody 'end' ;
+InterfaceHead     = '(' InterfaceTypeRefList ')' ;
+InterfaceTypeRefList = InterfaceTypeRef { ',' InterfaceTypeRef } ;
+InterfaceBody     = { InterfaceMember } ;
+InterfaceMember   = MethodHeading ';' | PropertyDecl ;
+
+FieldDecl         = [ Attributes ] IdentList ':' TypeRef [ '=' ConstExpr ] ';' ;
+
+(* ========= 7. Methods and routines ========= *)
+RoutineDecl       = [ Attributes ] RoutineHeading [ ';' { Directive } ';' ] [ RoutineBlock ] ;
+
+RoutineHeading    = 'procedure' RoutineName [ GenericParams ] [ ParamList ]
+                  | 'function'  RoutineName [ GenericParams ] [ ParamList ] ':' TypeRef
+                  | 'constructor' RoutineName [ ParamList ]
+                  | 'destructor'  RoutineName [ ParamList ] ;
+
+RoutineName       = QualifiedIdent ;
+
+GenericParams     = TypeParamClause ;
+TypeParamClause   = '<' TypeParamList '>' ;
+TypeParamList     = TypeParam { ',' TypeParam } ;
+TypeParam         = ID [ ':' TypeConstraints ] ;
+TypeConstraints   = TypeConstraint { ',' TypeConstraint } ;
+TypeConstraint    = 'constructor' | 'class' | 'record' | TypeRef ;
+
+ParamList         = '(' ParamGroup { ';' ParamGroup } ')' ;
+ParamGroup        = [ ParamModifier ] IdentList ':' TypeRef [ '=' ConstExpr ] ;
+ParamModifier     = 'const' | 'var' | 'out' ;
+
+Directive         = 'overload' | 'override' | 'virtual' | 'dynamic'
+                  | 'reintroduce' | 'abstract' | 'final' | 'inline'
+                  | 'deprecated' [ '(' STR ')' ]
+                  | 'experimental'
+                  | 'static'
+                  | 'message' INT
+                  | CallingConv ;
+
+CallingConv       = 'register' | 'cdecl' | 'pascal' | 'safecall'
+                  | 'stdcall' | 'winapi' | 'inline' ;
+
+RoutineBlock      = Block ;
+
+MethodDecl        = [ ClassMethod ] RoutineDecl ;
+ClassMethod       = 'class' ;
+
+MethodHeading     = ( [ ClassMethod ] 'procedure' ID [ GenericParams ] [ ParamList ] )
+                  | ( [ ClassMethod ] 'function'  ID [ GenericParams ] [ ParamList ] ':' TypeRef )
+                  | ( [ ClassMethod ] 'operator' OperatorId ParamList ':' TypeRef )
+                  | ( [ ClassMethod ] 'operator' OperatorId ParamList )
+                  | ( 'constructor' ID [ ParamList ] )
+                  | ( 'destructor'  ID [ ParamList ] ) ;
+
+OperatorId        = 'Add' | 'Subtract' | 'Multiply' | 'Divide'
+                  | 'IntDivide' | 'Modulus'
+                  | 'BitwiseAnd' | 'BitwiseOr' | 'BitwiseXor'
+                  | 'LeftShift' | 'RightShift'
+                  | 'Positive' | 'Negative' | 'LogicalNot'
+                  | 'Equal' | 'NotEqual' | 'LessThan' | 'LessThanOrEqual'
+                  | 'GreaterThan' | 'GreaterThanOrEqual'
+                  | 'Implicit' | 'Explicit'
+                  | 'True' | 'False' ;
+
+(* ========= 8. Properties ========= *)
+PropertyDecl      = [ Attributes ] 'property' PropertyName [ PropertyIndex ] ':' TypeRef
+                    PropertySpecifiers ';' ;
+
+PropertyName      = ID ;
+
+PropertyIndex     = '[' PropertyParamList ']' ;
+PropertyParamList = PropertyParam { ';' PropertyParam } ;
+PropertyParam     = [ 'const' ] IdentList ':' TypeRef ;
+
+PropertySpecifiers= ( 'read' Accessor )
+                    [ 'write' Accessor ]
+                    [ 'stored' ( ID | 'True' | 'False' ) ]
+                    [ ( 'default' ConstExpr ) | 'nodefault' ]
+                    [ 'implements' TypeRef { ',' TypeRef } ]
+                    [ 'index' ConstExpr ]
+                    [ 'dispID' ConstExpr ] ;
+
+Accessor          = ID | QualifiedIdent ;
+
+(* ========= 9. Attributes (placement) ========= *)
+Attributes        = '[' AttrList ']' ;
+AttrList          = Attribute { ',' Attribute } ;
+Attribute         = AttrType [ AttrArgs ] ;
+AttrType          = QualifiedIdent ;  (* 'Attribute' suffix may be omitted *)
+AttrArgs          = '(' [ AttrArgList ] ')' ;
+AttrArgList       = ConstExpr { ',' ConstExpr } ;
+
+(* ========= 10. Statements ========= *)
+StatementList     = { Statement [ ';' ] } ;
+
+Statement         = LabeledStatement
+                  | SimpleStatement
+                  | StructuredStatement
+                  | Empty ;
+
+LabeledStatement  = LabelId ':' Statement ;
+LabelId           = INT | ID ;
+
+Empty             = /* nothing */ ;
+
+SimpleStatement   = AssignOrCall
+                  | 'inherited' [ QualifiedIdent [ ActualParams ] ]
+                  | 'goto' LabelId ;
+
+AssignOrCall      = Designator ':=' Expression
+                  | Designator [ ActualParams ] ;
+
+Designator        = QualIdOrPrimary { Selector } ;
+
+QualIdOrPrimary   = QualifiedIdent | Primary ;
+
+Selector          = '.' ID
+                  | '[' ArgList ']'
+                  | '^' ;
+
+ActualParams      = '(' [ ArgList ] ')' ;
+ArgList           = Arg { ',' Arg } ;
+Arg               = Expression | ID ':' Expression ;
+
+StructuredStatement
+                  = CompoundStmt
+                  | ConditionalStmt
+                  | CaseStmt
+                  | WhileStmt
+                  | RepeatStmt
+                  | ForStmt
+                  | ForInStmt
+                  | WithStmt
+                  | TryStmt
+                  | RaiseStmt ;
+
+CompoundStmt      = 'begin' StatementList 'end' ;
+
+ConditionalStmt   = 'if' Expression 'then' Statement [ 'else' Statement ] ;
+
+CaseStmt          = 'case' Expression 'of' CaseSelectorList [ ';' 'else' Statement ] 'end' ;
+CaseSelectorList  = CaseSelector { ';' CaseSelector } ;
+CaseSelector      = ConstExprList ':' Statement ;
+
+WhileStmt         = 'while' Expression 'do' Statement ;
+RepeatStmt        = 'repeat' StatementList 'until' Expression ;
+
+ForStmt           = 'for' Designator ':=' Expression ( 'to' | 'downto' ) Expression 'do' Statement ;
+
+ForInStmt         = 'for' ( 'var' ID ':' TypeRef 'in' Expression | ID 'in' Expression ) 'do' Statement ;
+
+WithStmt          = 'with' ExprList 'do' Statement ;
+ExprList          = Expression { ',' Expression } ;
+
+TryStmt           = 'try' StatementList ( ExceptPart | FinallyPart ) 'end' ;
+ExceptPart        = 'except' HandlerList 'end' ;
+HandlerList       = { Handler ';' } [ 'else' StatementList ] ;
+Handler           = 'on' [ ID ':' ] TypeRef 'do' StatementList ;
+FinallyPart       = 'finally' StatementList 'end' ;
+
+RaiseStmt         = 'raise' [ Expression [ 'at' Expression ] ] ;
+
+(* ========= 11. Expressions (precedence) ========= *)
+Expression        = OrElseExpr ;
+
+OrElseExpr        = AndAlsoExpr { 'or' AndAlsoExpr } ;
+AndAlsoExpr       = NotExpr     { 'and' NotExpr } ;
+NotExpr           = [ 'not' ] XorExpr ;
+XorExpr           = RelExpr     { 'xor' RelExpr } ;
+
+RelExpr           = AddExpr [ RelOp AddExpr ] ;
+RelOp             = '=' | '<>' | '<' | '>' | '<=' | '>=' | 'in' | 'is' | 'as' ;
+
+AddExpr           = MulExpr { AddOp MulExpr } ;
+AddOp             = '+' | '-' | 'or' | 'xor' ;
+
+MulExpr           = UnaryExpr { MulOp UnaryExpr } ;
+MulOp             = '*' | '/' | 'div' | 'mod' | 'and' | 'shl' | 'shr' ;
+
+UnaryExpr         = [ '+' | '-' | 'not' | '@' | '^' ] Primary ;
+
+Primary           = Literal
+                  | 'nil'
+                  | SetConstructor
+                  | '(' Expression ')'
+                  | QualifiedIdent [ GenericArgs ] { Selector }
+                  | AnonymousMethod ;
+
+Selector          = '.' ID
+                  | '[' ArgList ']'
+                  | '^'
+                  | '(' [ ArgList ] ')' ;
+
+Literal           = INT | REAL | STR | CharCode | 'True' | 'False' ;
+
+SetConstructor    = '[' [ SetElemList ] ']' ;
+SetElemList       = SetElem { ',' SetElem } ;
+SetElem           = Expression [ '..' Expression ] ;
+
+AnonymousMethod   = 'function' [ ParamList ] [ ':' TypeRef ] '=>' Statement
+                  | 'procedure' [ ParamList ] '=>' Statement ;
+
+(* ========= 12. Constant expressions ========= *)
+ConstExpr         = ConstRelExpr ;
+
+ConstRelExpr      = ConstAddExpr [ RelOp ConstAddExpr ] ;
+ConstAddExpr      = ConstMulExpr { AddOp ConstMulExpr } ;
+ConstMulExpr      = ConstUnaryExpr { MulOp ConstUnaryExpr } ;
+ConstUnaryExpr    = [ '+' | '-' | 'not' ] ConstPrimary ;
+ConstPrimary      = Literal
+                  | 'nil'
+                  | '(' ConstExpr ')'
+                  | QualifiedIdent
+                  | 'TypeInfo' '(' TypeRef ')' ;
+
+(* ========= End ========= *)
