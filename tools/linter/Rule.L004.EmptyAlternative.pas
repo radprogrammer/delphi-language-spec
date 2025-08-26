@@ -16,6 +16,9 @@ uses
   System.Math;
 
 
+// to test failure, add to EBNF:
+// LintEmptyAlt1 = 'a' | ;
+
 procedure RunL004_EmptyAlternatives(const G:TGrammar; const Issues:TObjectList<TLintIssue>);
   procedure Walk(N:TNode);
   var

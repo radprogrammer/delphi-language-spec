@@ -16,8 +16,6 @@ uses
   System.SysUtils;
 
 
-// to test failure, add to EBNF:
-// LintEmptyAlt1 = 'a' | ;
 procedure RunL003_Duplicates(const G:TGrammar; const Issues:TObjectList<TLintIssue>);
 var
   seen:TDictionary<string, Integer>;
