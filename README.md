@@ -38,10 +38,9 @@ This repository provides a structured, version-controlled specification of the *
 │   └── lexical.json   # machine-readable tables for keywords, operators, literals
 ├── grammar/
 │   └── Delphi.ebnf    # machine-readable grammar file
-├── tests/
-│   └── tokenizer/     # TODO tokenization validation examples
 ├── tools/
 │   └── linter/        # Spec checker (TODO: More tests)
+│       more to come...
 └── README.md
 ```
 
