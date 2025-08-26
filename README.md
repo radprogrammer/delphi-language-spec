@@ -9,6 +9,8 @@
 
 This repository provides a structured, version-controlled specification of the **Delphi programming language**. It is community-driven and unofficial, but designed to complement Embarcadero’s [official documentation](https://docwiki.embarcadero.com/RADStudio/en/Delphi_Language_Reference) with a normative, open, and maintained specification.
 
+![DLS Logo](./media/DLS.png)
+
 
 ## Goals
 
