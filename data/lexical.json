@@ -753,7 +753,21 @@
     ],
     "precedence_notes": [
       "When scanning, prefer the longest match (e.g., '..' before '.'; ':=' before ':')."
-    ]
+    ],
+    "names": [
+      "ID",
+      "INT",
+      "REAL",
+      "STR",
+      "CharCode"
+    ],
+    "aliases": {
+      "ID": "identifier",
+      "INT": "literals.integer",
+      "REAL": "literals.real",
+      "STR": "literals.string.single_quoted",
+      "CharCode": "literals.string.char_code"
+    }
   },
   "keywords": {
     "reserved": [
@@ -890,5 +904,29 @@
     "The lexer should treat '$' and '%' as part of numeric literals when followed by valid digits.",
     "Strings do not use backslash escapes; use doubled single quotes or char codes.",
     "Square brackets are ordinary delimiters lexically; attribute syntax '[<...>]' is handled by the grammar."
+  ],
+  "punctuators": [
+    "(",
+    ")",
+    "*",
+    "+",
+    ",",
+    "-",
+    ".",
+    "/",
+    ":",
+    ";",
+    "<",
+    "=",
+    ">",
+    "@",
+    "[",
+    "]",
+    "^",
+    "..",
+    ":=",
+    "<=",
+    "<>",
+    ">="
   ]
 }

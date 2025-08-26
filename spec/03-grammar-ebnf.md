@@ -1,10 +1,10 @@
-# Delphi Language Specification
+﻿# Delphi Language Specification
 ## 03 Grammar — EBNF
 
 ### Status
-Draft v0.2.0 — 2025-08-24  
-Target: RAD Studio 12 Athens (Delphi)  
-Scope: This chapter gives a **complete EBNF grammar** for Delphi source files (programs, libraries, packages, and units), declarations (types, variables, constants, resourcestrings, labels), **classes/records/interfaces**, **generics** (types and methods), **procedural types** (including anonymous-method and method-pointer forms), **attributes**, **helpers**, **statements**, and **expressions** with precedence.  
+Draft v0.2.0 — 2025-08-24
+Target: RAD Studio 12 Athens (Delphi)
+Scope: This chapter gives a **complete EBNF grammar** for Delphi source files (programs, libraries, packages, and units), declarations (types, variables, constants, resourcestrings, labels), **classes/records/interfaces**, **generics** (types and methods), **procedural types** (including anonymous-method and method-pointer forms), **attributes**, **helpers**, **statements**, and **expressions** with precedence.
 Lexical rules (identifiers, literals, operators, comments, directives) are defined in **01‑lexical.md**. Semantics appear in chapters 04–11.
 
 > **Preprocessing layer.** Compiler directives (e.g., `{$IF}`, `{$DEFINE}`, `{$INCLUDE}`) are recognized **inside comments** and processed **before** tokenization (§02). Inactive regions removed by conditionals are **not** parsed.
@@ -189,10 +189,10 @@ RecordHelperType  := 'record' 'helper' 'for' TypeRef
                      RecordHelperBody 'end' ;
 ```
 
-**Notes.**  
-- `AliasType` with the `type` keyword (e.g., `type T = type U;`) preserves **identity** (§04).  
-- `ArrayType` without brackets is a **dynamic array**; with brackets is **static**.  
-- `reference to` denotes an **anonymous‑method** type; `of object` denotes a **method pointer** type.  
+**Notes.**
+- `AliasType` with the `type` keyword (e.g., `type T = type U;`) preserves **identity** (§04).
+- `ArrayType` without brackets is a **dynamic array**; with brackets is **static**.
+- `reference to` denotes an **anonymous‑method** type; `of object` denotes a **method pointer** type.
 - **Pointer** (`^ T`) and **class reference** (`class of T`) are separate type constructors (not suffixes).
 
 ---
@@ -332,9 +332,9 @@ OperatorId        := 'Add' | 'Subtract' | 'Multiply' | 'Divide'
                    | 'True' | 'False' ;
 ```
 
-**Notes.**  
-- Method headings inside **interfaces** are declarations only (no `RoutineBlock`).  
-- `operator` methods are `class operator` in implementation; the `class` keyword is captured by `ClassMethod`.  
+**Notes.**
+- Method headings inside **interfaces** are declarations only (no `RoutineBlock`).
+- `operator` methods are `class operator` in implementation; the `class` keyword is captured by `ClassMethod`.
 - Constructors and destructors cannot be generic (§05).
 
 ---
@@ -506,9 +506,9 @@ AnonymousMethod   := 'function' ParamList? ( ':' TypeRef )? AnonymousBlock
 AnonymousBlock    := 'begin' StatementList 'end' ;
 ```
 
-**Notes.**  
-- `QualifiedIdent GenericArgs?` allows `TypeName<T>` in **type** or **constructor** contexts; in pure **expression** contexts, the parser must ensure this form is only accepted where a **type** is expected (§05).  
-- `@` and `^` appear here in unary form; `^` is also used in selectors to dereference after a primary.  
+**Notes.**
+- `QualifiedIdent GenericArgs?` allows `TypeName<T>` in **type** or **constructor** contexts; in pure **expression** contexts, the parser must ensure this form is only accepted where a **type** is expected (§05).
+- `@` and `^` appear here in unary form; `^` is also used in selectors to dereference after a primary.
 - `is`/`as` are included in `RelOp` per Delphi’s precedence.
 
 ---
@@ -535,8 +535,9 @@ Only a subset is valid based on context (case labels, set bounds, etc., see §04
 
 ### 13. Conformance notes
 
-- The grammar aims to be **LALR(1)** friendly. A production split across **type vs expression** contexts avoids the classic `< >` ambiguity for generics.  
-- Some restrictions (e.g., what qualifies as an **ordinal** type, property specifier restrictions, helper limitations, operator availability) are **semantic** and enforced in chapters 04–11.  
-- Compiler directives in comments may elide whole subtrees before parsing; ensure your preprocessor honors §02.  
-- Anonymous‑method *literals* use Delphi’s real syntax: `function … begin … end` / `procedure … begin … end` (no `=>`).  
+- The grammar aims to be **LALR(1)** friendly. A production split across **type vs expression** contexts avoids the classic `< >` ambiguity for generics.
+- Some restrictions (e.g., what qualifies as an **ordinal** type, property specifier restrictions, helper limitations, operator availability) are **semantic** and enforced in chapters 04–11.
+- Compiler directives in comments may elide whole subtrees before parsing; ensure your preprocessor honors §02.
+- Anonymous‑method *literals* use Delphi’s real syntax: `function … begin … end` / `procedure … begin … end` (no `=>`).
 - Inline *block‑scoped* `var`/`const` statements are included.
+

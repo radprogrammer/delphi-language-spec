@@ -1,4 +1,4 @@
-(*
+﻿(*
   Delphi EBNF — ISO/IEC 14977 style
   Canonical machine-readable grammar corresponding to spec/03-grammar-ebnf.md
   Target: RAD Studio 12 (Athens)
@@ -67,6 +67,15 @@ DeclarationPart   = ConstSection
                   | ResourceStringSection
                   | LabelDeclSection
                   | RoutineDecl ;
+
+(* Exports clause (for program/library/package) *)
+ExportsStmt      = 'exports' ExportItem { ',' ExportItem } ';' ;
+ExportItem       = QualifiedIdent
+                   [ 'name' STR ]
+                   [ 'index' INT ] ;
+
+(* Anonymous methods use a plain compound statement as their body *)
+AnonymousBlock   = CompoundStmt ;
 
 LabelDeclSection  = 'label' LabelId { ',' LabelId } ';' ;
 
@@ -291,6 +300,7 @@ Statement         = LabeledStatement
 LabeledStatement  = LabelId ':' Statement ;
 LabelId           = INT | ID ;
 
+(* consider:  Empty = ;   *)
 Empty             = /* nothing */ ;
 
 SimpleStatement   = AssignOrCall
@@ -300,15 +310,11 @@ SimpleStatement   = AssignOrCall
                   | 'goto' LabelId ;
 
 AssignOrCall      = Designator ':=' Expression
-                  | Designator [ ActualParams ] ;
+                  | Designator ;
 
 Designator        = QualIdOrPrimary { Selector } ;
 
 QualIdOrPrimary   = QualifiedIdent | Primary ;
-
-Selector          = '.' ID
-                  | '[' ArgList ']'
-                  | '^' ;
 
 ActualParams      = '(' [ ArgList ] ')' ;
 ArgList           = Arg { ',' Arg } ;

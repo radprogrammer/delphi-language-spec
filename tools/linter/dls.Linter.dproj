@@ -1,0 +1,104 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <Base>True</Base>
+        <AppType>Console</AppType>
+        <Config Condition="'$(Config)'==''">Base</Config>
+        <FrameworkType>None</FrameworkType>
+        <MainSource>dls.Linter.dpr</MainSource>
+        <Platform Condition="'$(Platform)'==''">Win64</Platform>
+        <ProjectGuid>{D2E3B9A3-9E39-4D5D-9CF6-1B4DA9A30C01}</ProjectGuid>
+        <ProjectName Condition="'$(ProjectName)'==''">dls.Linter</ProjectName>
+        <ProjectVersion>20.3</ProjectVersion>
+        <RuntimeType>Delphi</RuntimeType>
+        <TargetName>DelphiEbnfLint</TargetName>
+        <TargetedPlatforms>3</TargetedPlatforms>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Config)'=='Base' or '$(Base)'!=''">
+        <Base>true</Base>
+    </PropertyGroup>
+    <PropertyGroup Condition="('$(Platform)'=='Win32' and '$(Base)'=='true') or '$(Base_Win32)'!=''">
+        <Base_Win32>true</Base_Win32>
+        <CfgParent>Base</CfgParent>
+        <Base>true</Base>
+    </PropertyGroup>
+    <PropertyGroup Condition="('$(Platform)'=='Win64' and '$(Base)'=='true') or '$(Base_Win64)'!=''">
+        <Base_Win64>true</Base_Win64>
+        <CfgParent>Base</CfgParent>
+        <Base>true</Base>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Base)'!=''">
+        <SanitizedProjectName>dls_Linter</SanitizedProjectName>
+        <DCC_DcuOutput>.\$(Platform)\$(Config)</DCC_DcuOutput>
+        <DCC_Description>https://github.com/radprogrammer/delphi-language-spec</DCC_Description>
+        <DCC_ExeOutput>..\..\</DCC_ExeOutput>
+        <VerInfo_Keys>FileVersion=1.0.0.0</VerInfo_Keys>
+        <VerInfo_Locale>1033</VerInfo_Locale>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Base_Win32)'!=''">
+        <AppDPIAwarenessMode>none</AppDPIAwarenessMode>
+        <Manifest_File>(None)</Manifest_File>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Base_Win64)'!=''">
+        <AppDPIAwarenessMode>none</AppDPIAwarenessMode>
+        <DCC_DcuOutput>.\$(Platform)\$(Config)</DCC_DcuOutput>
+        <Manifest_File>..\..\..\simple-linter\DelphiEbnfLint_scaffold\tools\DelphiEbnfLint\(None)</Manifest_File>
+        <VerInfo_Keys>FileVersion=1.0.0.0</VerInfo_Keys>
+    </PropertyGroup>
+    <ItemGroup>
+        <DelphiCompile Include="$(MainSource)">
+            <MainSource>MainSource</MainSource>
+        </DelphiCompile>
+        <DCCReference Include="EBNF.Ast.pas"/>
+        <DCCReference Include="EBNF.Lexer.pas"/>
+        <DCCReference Include="EBNF.Parser.pas"/>
+        <DCCReference Include="Grammar.LexicalInventory.pas"/>
+        <DCCReference Include="Grammar.Symbols.pas"/>
+        <DCCReference Include="UDiff.pas"/>
+        <DCCReference Include="UFileUtil.pas"/>
+        <DCCReference Include="dls.Linter.RuleExec.pas"/>
+        <DCCReference Include="dls.Linter.Parameters.pas"/>
+        <DCCReference Include="dls.Linter.Report.pas"/>
+        <DCCReference Include="dls.Linter.Main.pas"/>
+        <DCCReference Include="Rule.L001.UndefinedNonT.pas"/>
+        <DCCReference Include="Linter.Issues.pas"/>
+        <DCCReference Include="Rule.L002.UnusedNonT.pas"/>
+        <DCCReference Include="Rule.T002.UnknownTokenRef.pas"/>
+        <DCCReference Include="Rule.L003.DupeNonT.pas"/>
+        <DCCReference Include="Rule.L004.EmptyAlternative.pas"/>
+        <DCCReference Include="Rule.T004.TokenCollisionWithNonT.pas"/>
+        <BuildConfiguration Include="Base">
+            <Key>Base</Key>
+        </BuildConfiguration>
+    </ItemGroup>
+    <ItemGroup/>
+    <ProjectExtensions>
+        <Borland.Personality>Delphi.Personality.12</Borland.Personality>
+        <Borland.ProjectType>VCLApplication</Borland.ProjectType>
+        <BorlandProject>
+            <Delphi.Personality>
+                <Source>
+                    <Source Name="MainSource">dls.Linter.dpr</Source>
+                </Source>
+                <Excluded_Packages/>
+                <VersionInfo>
+                    <VersionInfo Name="IncludeVerInfo">True</VersionInfo>
+                    <VersionInfo Name="AutoIncBuild">False</VersionInfo>
+                    <VersionInfo Name="MajorVer">0</VersionInfo>
+                    <VersionInfo Name="MinorVer">1</VersionInfo>
+                    <VersionInfo Name="Build">0</VersionInfo>
+                </VersionInfo>
+                <Parameters>
+                    <Parameters Name="RunParams">--ebnf ..\grammar\Delphi.ebnf --lexical ..\data\lexical.json --md ..\spec\03-grammar-ebnf.md --start SourceFile --format text</Parameters>
+                </Parameters>
+            </Delphi.Personality>
+            <Platforms>
+                <Platform value="Win32">True</Platform>
+                <Platform value="Win64">True</Platform>
+            </Platforms>
+        </BorlandProject>
+        <ProjectFileVersion>12</ProjectFileVersion>
+    </ProjectExtensions>
+    <Import Project="$(BDS)\Bin\CodeGear.Delphi.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Delphi.Targets')"/>
+    <Import Project="$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\$(PRODUCTVERSION)\UserTools.proj" Condition="Exists('$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\$(PRODUCTVERSION)\UserTools.proj')"/>
+    <Import Project="$(MSBuildProjectName).deployproj" Condition="Exists('$(MSBuildProjectName).deployproj')"/>
+</Project>
