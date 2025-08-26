@@ -1,4 +1,4 @@
-# Delphi Language Specification
+﻿# Delphi Language Specification
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Status: Draft](https://img.shields.io/badge/Status-Draft-orange.svg)](./spec/01-lexical.md#status)
@@ -39,7 +39,9 @@ This repository provides a structured, version-controlled specification of the *
 ├── grammar/
 │   └── Delphi.ebnf    # machine-readable grammar file
 ├── tests/
-│   └── tokenizer/     # tokenization validation examples
+│   └── tokenizer/     # TODO tokenization validation examples
+├── tools/
+│   └── linter/        # Spec checker (TODO: More tests)
 └── README.md
 ```
 
