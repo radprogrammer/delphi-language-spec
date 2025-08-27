@@ -1,4 +1,4 @@
-unit Linter.Issues;
+unit Lint.Issues;
 
 interface
 

@@ -1,11 +1,11 @@
-unit dls.Linter.Report;
+unit Lint.Report;
 
 interface
 
 uses
   System.SysUtils,
   System.Generics.Collections,
-  Linter.Issues;
+  Lint.Issues;
 
 
 type

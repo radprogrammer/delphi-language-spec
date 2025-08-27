@@ -6,7 +6,7 @@ uses
   System.Generics.Collections,
   EBNF.Ast,
   Grammar.LexicalInventory,
-  Linter.Issues;
+  Lint.Issues;
 
 procedure RunT002_UnknownTokenRef(const G:TGrammar; const Inv:TLexicalInventory; const Issues:TObjectList<TLintIssue>);
 

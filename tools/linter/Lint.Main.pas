@@ -1,4 +1,4 @@
-unit dls.Linter.Main;
+unit Lint.Main;
 
 interface
 
@@ -12,16 +12,17 @@ uses
   EBNF.Lexer,
   EBNF.Parser,
   Grammar.LexicalInventory,
-  Linter.Issues,
   UDiff,
   UFileUtil,
-  dls.Linter.Parameters,
-  dls.Linter.Report,
-  dls.Linter.RuleExec;
+  Lint.Issues,
+  Lint.Parameters,
+  Lint.Report,
+  Lint.RuleExec;
 
 
 type
   TExitCode = (ecOK=0, ecWarn=1, ecErr=2);
+
 
 function RunLinter: Integer;
 var

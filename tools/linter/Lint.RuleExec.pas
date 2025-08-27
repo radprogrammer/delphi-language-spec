@@ -1,4 +1,4 @@
-unit dls.Linter.RuleExec;
+unit Lint.RuleExec;
 
 interface
 
@@ -8,7 +8,7 @@ uses
   EBNF.Ast,
   Grammar.LexicalInventory,
   Grammar.Symbols,
-  Linter.Issues;
+  Lint.Issues;
 
 
 procedure RunRules(const G:TGrammar; const Inv:TLexicalInventory; const Start:string; const Issues:TObjectList<TLintIssue>);
@@ -25,9 +25,6 @@ uses
   Rule.L004.EmptyAlternative,
   Rule.T002.UnknownTokenRef,
   Rule.T004.TokenCollisionWithNonT;
-
-
-
 
 
 (*

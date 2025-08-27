@@ -1,4 +1,4 @@
-unit dls.Linter.Parameters;
+unit Lint.Parameters;
 
 interface
 
@@ -82,9 +82,9 @@ end;
 function TLinterParameters.BuildHelp: string;
 begin
   Result :=
-    'dls.Linter - Delphi EBNF Linter' + sLineBreak +
+    'DLS.Lint - Delphi EBNF Linter' + sLineBreak +
     'Usage:' + sLineBreak +
-    '  dls.Linter --ebnf <file> [--lexical <file>] [--md <file>]' + sLineBreak +
+    '  DLS.Lint --ebnf <file> [--lexical <file>] [--md <file>]' + sLineBreak +
     '            [--start <NonTerminal>] [--format text|json]' + sLineBreak +
     '            [--warn-as-error L001,L002,T001]' + sLineBreak +
     sLineBreak +

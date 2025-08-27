@@ -5,7 +5,7 @@ interface
 uses
   System.Generics.Collections,
   EBNF.Ast,
-  Linter.Issues;
+  Lint.Issues;
 
 
 procedure RunL004_EmptyAlternatives(const G:TGrammar; const Issues:TObjectList<TLintIssue>);
