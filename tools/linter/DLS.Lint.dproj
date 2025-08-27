@@ -48,19 +48,19 @@
         <DelphiCompile Include="$(MainSource)">
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
-        <DCCReference Include="EBNF.Ast.pas"/>
-        <DCCReference Include="EBNF.Lexer.pas"/>
-        <DCCReference Include="EBNF.Parser.pas"/>
-        <DCCReference Include="Grammar.LexicalInventory.pas"/>
-        <DCCReference Include="Grammar.Symbols.pas"/>
-        <DCCReference Include="UDiff.pas"/>
-        <DCCReference Include="UFileUtil.pas"/>
-        <DCCReference Include="dls.Linter.RuleExec.pas"/>
-        <DCCReference Include="dls.Linter.Parameters.pas"/>
-        <DCCReference Include="dls.Linter.Report.pas"/>
-        <DCCReference Include="dls.Linter.Main.pas"/>
+        <DCCReference Include="..\shared\EBNF.Ast.pas"/>
+        <DCCReference Include="..\shared\EBNF.Lexer.pas"/>
+        <DCCReference Include="..\shared\EBNF.Parser.pas"/>
+        <DCCReference Include="..\shared\Grammar.LexicalInventory.pas"/>
+        <DCCReference Include="..\shared\Grammar.Symbols.pas"/>
+        <DCCReference Include="..\shared\UDiff.pas"/>
+        <DCCReference Include="..\shared\UFileUtil.pas"/>
+        <DCCReference Include="Lint.RuleExec.pas"/>
+        <DCCReference Include="Lint.Parameters.pas"/>
+        <DCCReference Include="Lint.Report.pas"/>
+        <DCCReference Include="Lint.Main.pas"/>
         <DCCReference Include="Rule.L001.UndefinedNonT.pas"/>
-        <DCCReference Include="Linter.Issues.pas"/>
+        <DCCReference Include="Lint.Issues.pas"/>
         <DCCReference Include="Rule.L002.UnusedNonT.pas"/>
         <DCCReference Include="Rule.T002.UnknownTokenRef.pas"/>
         <DCCReference Include="Rule.L003.DupeNonT.pas"/>

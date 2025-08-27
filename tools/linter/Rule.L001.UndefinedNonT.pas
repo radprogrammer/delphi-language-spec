@@ -6,7 +6,7 @@ uses
   System.Generics.Collections,
   EBNF.Ast,
   Grammar.Symbols,
-  Linter.Issues;
+  Lint.Issues;
 
 procedure RunL001_UndefinedNonTerminal(const G:TGrammar; const S:TSymbolTables; const TokenNames:TDictionary<string, Boolean>; const Start:string; const Issues:TObjectList<TLintIssue>);
 
