@@ -30,8 +30,32 @@ type
   end;
 
 
-implementation
+  function CreateGrammarFromEBNF(const EBNFFileName:string):TGrammar;
 
+
+implementation
+uses
+  System.IOUtils;
+
+
+
+function CreateGrammarFromEBNF(const EBNFFileName:string):TGrammar;
+var
+  Lexer:TEBNFLexer;
+  Parser:TEBNFParser;
+begin
+  Lexer := TEBNFLexer.Create(TFile.ReadAllText(EBNFFileName, TEncoding.UTF8));
+  try
+    Parser := TEBNFParser.Create(Lexer);
+    try
+      Result := Parser.Parse;
+    finally
+      Parser.Free;
+    end;
+  finally
+    Lexer.Free;
+  end;
+end;
 
 constructor TEBNFParser.Create(ALexer:TEBNFLexer);
 begin
