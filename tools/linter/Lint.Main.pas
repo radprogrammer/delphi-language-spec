@@ -9,7 +9,6 @@ uses
   System.SysUtils,
   System.Generics.Collections,
   EBNF.Ast,
-  EBNF.Lexer,
   EBNF.Parser,
   Grammar.LexicalInventory,
   UDiff,
@@ -30,8 +29,6 @@ var
   EbnfPath, LexPath, MdPath, StartSymbol, FormatStr:string;
   TextFormat:Boolean;
   EbnfText, MdText, MdBlock:string;
-  Lexer:TEBNFLexer;
-  Parser:TEBNFParser;
   Grammar:TGrammar;
   LexInv:TLexicalInventory;
   Issues:TObjectList<TLintIssue>;
@@ -85,17 +82,7 @@ begin
     Grammar := nil;
     LexInv := TLexicalInventory.Create;
     try
-      Lexer := TEBNFLexer.Create(EbnfText);
-      try
-        Parser := TEBNFParser.Create(Lexer);
-        try
-          Grammar := Parser.Parse;
-        finally
-          Parser.Free;
-        end;
-      finally
-        Lexer.Free;
-      end;
+      Grammar := CreateGrammarFromEBNF(EBNFText);
 
       // Load lexical inventory if provided
       if (LexPath <> '') and FileExists(LexPath) then
