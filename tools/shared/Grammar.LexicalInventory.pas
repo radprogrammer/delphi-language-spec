@@ -23,7 +23,7 @@ type
 
     procedure LoadFromFile(const Path:string);
     function HasToken(const Name:string):Boolean;
-    //for future use: T001 “Unknown terminal literal
+    //for future use: T001 "Unknown terminal literal
     function HasKeywordLiteral(const Lit:string):Boolean;
     function HasPunct(const Lit:string):Boolean;
   end;

@@ -35,7 +35,7 @@ Rule names
   Sxxx = style advisories.  (TODO)
 
   Numbered bucket groupings
-  L000–L099 = core structural invariants (must be sane before anything else).
+  L000-L099 = core structural invariants (must be sane before anything else).
   L100+ = deeper analyses (FIRST/FOLLOW, left-recursion heuristics, etc.).
 *)
 
