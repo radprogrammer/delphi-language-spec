@@ -59,6 +59,7 @@ UnitFile          := 'unit' UnitId ';'
 
 UnitEnd           := 'initialization' StatementList
                      ( 'finalization' StatementList )? 'end'
+                   | 'begin' StatementList 'end'
                    | 'end' ;
 
 ProgHeading       := QualifiedIdent ( '(' IdentList ')' )? ;
@@ -130,7 +131,8 @@ TypeDecl          := Attributes? ID TypeParamClause? '=' TypeDef ';' ;
 VarSection        := 'var' VarDecl+ ;
 ThreadVarSection  := 'threadvar' VarDecl+ ;
 
-VarDecl           := Attributes? IdentList ':' TypeRef ( '=' ConstExpr )? ';' ;
+VarDecl           := Attributes? IdentList ':' TypeRef
+                     ( '=' ConstExpr | 'absolute' ( QualifiedIdent | INT ) )? ';' ;
 IdentList         := ID ( ',' ID )* ;
 ```
 
@@ -147,7 +149,9 @@ TypeDef           := AliasType
                    | FileType
                    | RecordType
                    | ClassType
+                   | ClassForwardDecl
                    | InterfaceType
+                   | DispInterfaceType
                    | PointerType
                    | ClassRefType
                    | ProcType
@@ -164,7 +168,7 @@ EnumItem          := ID ( '=' ConstExpr )? ;
 SetType           := 'set' 'of' OrdinalType ;
 OrdinalType       := TypeRef ; // must denote ordinal type (semantic)
 
-ArrayType         := 'array' ( '[' ArrayIndexList ']' )? 'of' TypeRef ;
+ArrayType         := 'packed'? 'array' ( '[' ArrayIndexList ']' )? 'of' TypeRef ;
 ArrayIndexList    := ArrayIndex ( ',' ArrayIndex )* ;
 ArrayIndex        := SubrangeType | TypeRef ; // static array; absent => dynamic array
 
@@ -227,9 +231,10 @@ TypeConstraint    := 'constructor'
 ### 6. Classes, records, interfaces
 
 ```
-ClassType         := 'class' ClassHead? ClassBody 'end' ;
+ClassType         := 'class' ClassHead? ( ClassBody 'end' )? ;
+ClassForwardDecl  := 'class' ;           // type TFoo = class; forward declaration
 ClassHead         := ClassModifiers? AncestorList? ;
-ClassModifiers    := ( 'sealed' | 'abstract' )+ ;
+ClassModifiers    := 'sealed' | 'abstract' ;
 AncestorList      := '(' AncestorType ( ',' InterfaceTypeRef )* ')' ;
 AncestorType      := TypeRef ;
 InterfaceTypeRef  := TypeRef ;
@@ -255,7 +260,7 @@ ClassMember       := FieldDecl
 ClassVarDecl      := 'class' 'var' VarDecl+ ;
 NestedTypeDecl    := 'type' TypeDecl+ ;
 
-RecordType        := 'record' RecordBody 'end' ;
+RecordType        := 'packed'? 'record' RecordBody 'end' ;
 RecordBody        := RecordFieldSection* VariantPart? ;
 RecordFieldSection:= (FieldDecl | MethodDecl | PropertyDecl | NestedTypeDecl) ;
 
@@ -267,7 +272,8 @@ VariantSelectorList
 VariantSelector   := ConstExprList ':' '(' RecordFieldSection* ')' ;
 ConstExprList     := ConstExpr ( ',' ConstExpr )* ;
 
-InterfaceType     := 'interface' InterfaceHead? InterfaceBody 'end' ;
+InterfaceType     := 'interface' InterfaceHead? ( '[' STR ']' )? InterfaceBody 'end' ;
+DispInterfaceType := 'dispinterface' InterfaceHead? ( '[' STR ']' )? InterfaceBody 'end' ;
 InterfaceHead     := '(' InterfaceTypeRefList ')' ;
 InterfaceTypeRefList := InterfaceTypeRef ( ',' InterfaceTypeRef )* ;
 InterfaceBody     := InterfaceMember* ;
@@ -294,12 +300,12 @@ RoutineName       := QualifiedIdent ;
 GenericParams     := TypeParamClause ;
 
 ParamList         := '(' ParamGroup ( ';' ParamGroup )* ')' ;
-ParamGroup        := ParamModifier? IdentList ':' TypeRef ( '=' ConstExpr )? ;
+ParamGroup        := ParamModifier? IdentList ( ':' TypeRef ( '=' ConstExpr )? )? ;
 ParamModifier     := 'const' | 'var' | 'out' ;
 
 Directive         := 'overload' | 'override' | 'virtual' | 'dynamic'
                    | 'reintroduce' | 'abstract' | 'final' | 'inline'
-                   | 'deprecated' ( '(' STR ')' )?
+                   | 'deprecated' STR?
                    | 'experimental'
                    | 'static'     // for class methods
                    | 'message' INT
@@ -307,7 +313,7 @@ Directive         := 'overload' | 'override' | 'virtual' | 'dynamic'
                    ;
 
 CallingConv       := 'register' | 'cdecl' | 'pascal' | 'safecall'
-                   | 'stdcall' | 'winapi' | 'inline' ;
+                   | 'stdcall' | 'winapi' ;
 
 RoutineBlock      := Block ;
 
@@ -399,7 +405,9 @@ SimpleStatement   := AssignOrCall
                    | 'inherited' ( QualifiedIdent? ActualParams? )?
                    | 'goto' LabelId ;
 
-InlineVarDecl     := 'var'   IdentList ( ':' TypeRef ( ':=' Expression )? )? ';' ;
+InlineVarDecl     := 'var' IdentList
+                     ( ':' TypeRef ( ':=' Expression )?
+                     | ':=' Expression ) ';' ;
 InlineConstDecl   := 'const' ID ( ':' TypeRef )? '=' Expression ';' ;
 
 AssignOrCall      := Designator ':=' Expression
@@ -427,7 +435,8 @@ StructuredStatement
                     | ForInStmt
                     | WithStmt
                     | TryStmt
-                    | RaiseStmt ;
+                    | RaiseStmt
+                    | AsmStmt ;
 
 ConditionalStmt   := 'if' Expression 'then' Statement ('else' Statement)? ;
 
@@ -448,13 +457,15 @@ ForInStmt         := 'for' ('var' ID ':' TypeRef 'in' Expression
 WithStmt          := 'with' ExprList 'do' Statement ;
 ExprList          := Expression ( ',' Expression )* ;
 
-TryStmt           := 'try' StatementList ( ExceptPart | FinallyPart ) 'end' ;
+TryStmt           := 'try' StatementList ( ExceptPart | FinallyPart ) ;
 ExceptPart        := 'except' HandlerList 'end' ;
 HandlerList       := ( Handler ';' )* ( 'else' StatementList )? ;
-Handler           := 'on' (ID ':')? TypeRef 'do' StatementList ;
+Handler           := 'on' (ID ':')? TypeRef 'do' Statement ;
 FinallyPart       := 'finally' StatementList 'end' ;
 
 RaiseStmt         := 'raise' ( Expression ( 'at' Expression )? )? ;
+
+AsmStmt           := 'asm' (* opaque assembly token stream *) 'end' ;
 ```
 
 ---
